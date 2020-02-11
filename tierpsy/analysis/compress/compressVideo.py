@@ -293,16 +293,15 @@ def compressVideo(video_file, masked_image_file, mask_param,  expected_fps=25,
     image_prev = np.zeros([])
 
     # Initialise FOV splitting if needed
+    if is_bgnd_subtraction:
+        img_fov = bgnd_subtractor.bgnd.astype(np.uint8)
+    else:
+        ret, img_fov = vid.read()
+        # close and reopen the video, to restart from the beginning
+        vid.release()
+        vid = selectVideoReader(video_file)
+
     if is_fov_tosplit:
-        # masked video does not exist yet so have to initialise from data
-        # use either background or first frame
-        if is_bgnd_subtraction:
-            img_fov = bgnd_subtractor.bgnd.astype(np.uint8)
-        else:
-            ret, img_fov = vid.read()
-            # close and reopen the video, to restart from the beginning
-            vid.release()
-            vid = selectVideoReader(video_file);
         # TODO: change class creator so it only needs the video name? by using
         # Tierpsy's functions such as selectVideoReader it can then read the first image by itself
 

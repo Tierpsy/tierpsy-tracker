@@ -40,7 +40,7 @@ def check_in_list(x, list_of_x, x_name):
 def get_summary_func(
         feature_type, summary_type,
         time_windows_ints, time_units,
-        keywords_in, keywords_ex, selected_feat,
+        feat_selection,
         dorsal_side_known,
         is_manual_index, **fold_args
         ):
@@ -53,6 +53,7 @@ def get_summary_func(
                 tierpsy_plate_summary,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
+                feat_selection = feat_selection,
                 is_manual_index=is_manual_index
                 )
         elif summary_type == 'trajectory':
@@ -60,6 +61,7 @@ def get_summary_func(
                 tierpsy_trajectories_summary,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
+                feat_selection = feat_selection,
                 is_manual_index=is_manual_index
                 )
         elif summary_type == 'plate_augmented':
@@ -67,6 +69,7 @@ def get_summary_func(
                 tierpsy_plate_summary_augmented,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
+                feat_selection = feat_selection,
                 is_manual_index=is_manual_index, **fold_args
                 )
 
@@ -150,6 +153,27 @@ def feat_set_parser(select_feat):
         selected_feat = None
     return selected_feat
 
+def select_parser(keywords_in, keywords_ex, select_feat):
+    """
+    EM: collects feature-selection related variables from the GUI, parses them
+    to lists of strings and returns the lists bound together in a tuple
+    (to make make it easier to pass together in other modules).
+    """
+
+    # EM : get list of keywords to include and to exclude
+    # TODO: catch conflicts
+    keywords_in = keywords_parser(keywords_include)
+    keywords_ex = keywords_parser(keywords_exclude)
+
+    # EM : get full path to feature set file
+    selected_feat = feat_set_parser(select_feat)
+
+    if keywords_in is None and keywords_ex is None and selected_feat is None:
+        return None
+    else:
+        return (keywords_in, keywords_ex, selected_feat)
+
+
 def make_df_filenames(fnames):
     """
     EM : Create dataframe with filename summaries and time window info for every time window
@@ -158,25 +182,6 @@ def make_df_filenames(fnames):
     df_files = pd.DataFrame({'file_id' : dd[0], 'file_name' : dd[1]})
     df_files['is_good'] = False
     return df_files
-
-def select_features(win_summaries,keywords_in,keywords_ex,selected_feat):
-    id_cols = [col for col in feat_df_id_cols if col in win_summaries.columns]
-
-    if not win_summaries.empty:
-        if selected_feat is not None:
-            win_summaries = win_summaries[id_cols+selected_feat]
-        if keywords_in is not None:
-            filter_col = [x for x in win_summaries.columns if any(key in x for key in keywords_in)]
-            win_summaries = win_summaries[id_cols+filter_col]
-        if keywords_ex is not None:
-            filter_col = [x for x in win_summaries.columns if any(key in x for key in keywords_ex)]
-            win_summaries = win_summaries[win_summaries.columns.drop(filter_col)]
-        if not any([selected_feat, keywords_in, keywords_ex]):
-            # only change order of columns
-            not_id_cols = win_summaries.columns.difference(id_cols).tolist()
-            win_summaries = win_summaries[id_cols + not_id_cols]
-
-    return win_summaries
 
 
 def shorten_feature_names(feat_summary):
@@ -225,20 +230,17 @@ def calculate_summaries(
     # EM : convert time windows to list of integers in frame number units
     time_windows_ints = time_windows_parser(time_windows)
 
-    # EM : get list of keywords to include and to exclude
-    # TODO: catch conflicts
-    keywords_in = keywords_parser(keywords_include)
-    keywords_ex = keywords_parser(keywords_exclude)
-
-    # EM : get full path to feature set file
-    selected_feat = feat_set_parser(select_feat)
+    # EM: get lists of strings (in a tuple) defining the feature selection
+    # from keywords_in,
+    # keywords_ex and select_feat.
+    feat_selection = select_parser(keywords_in, keywords_ex, select_feat)
 
     #get summary function
     # INPUT time windows time units here
     summary_func = get_summary_func(
         feature_type, summary_type,
         time_windows_ints, time_units,
-        keywords_in, keywords_ex, selected_feat,
+        feat_selection,
         dorsal_side_known,
         is_manual_index, **fold_args)
 
@@ -322,9 +324,6 @@ def calculate_summaries(
                     fid.write(','.join([str(x) for x in filenames.values])+"\n")
 
                 if not df.empty:
-                    # Select features
-                    df = select_features(df,keywords_in,keywords_ex,selected_feat)
-
                     # Abbreviate names
                     if abbreviate_features:
                         df = shorten_feature_names(df)
