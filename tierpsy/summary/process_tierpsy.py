@@ -110,7 +110,7 @@ def read_data(fname, time_windows, time_units, fps, is_manual_index):
 #%%
 def tierpsy_plate_summary(
         fname, time_windows, time_units, only_abs_ventral=False,
-        feat_selection=None, is_manual_index=False, delta_time=1/3):
+        selected_feat=None, is_manual_index=False, delta_time=1/3):
     """
     Calculate the plate summaries for a given file fname, within a given time window
     (units of start time and end time are in frame numbers).
@@ -142,7 +142,7 @@ def tierpsy_plate_summary(
             plate_feats = get_summary_stats(
                 timeseries_data[iwin], fps,  blob_features[iwin], delta_time,
                 only_abs_ventral=only_abs_ventral,
-                feat_selection=feat_selection
+                selected_feat=selected_feat
                 )
             plate_feats_list.append(pd.DataFrame(plate_feats).T)
         else:
@@ -159,7 +159,7 @@ def tierpsy_plate_summary(
                     timeseries_data[iwin][idx_well].reset_index(), fps,
                     blob_features[iwin][idx_well].reset_index(), delta_time,
                     only_abs_ventral=only_abs_ventral,
-                    feat_selection=feat_selection
+                    selected_feat=selected_feat
                     )
                 # first prepend the well_name_s to the well_feats series,
                 # then transpose it so it is a single-row dataframe,
@@ -184,7 +184,7 @@ def tierpsy_plate_summary(
 
 def tierpsy_trajectories_summary(
         fname, time_windows, time_units, only_abs_ventral=False,
-        feat_selection=None, is_manual_index=False, delta_time=1/3):
+        selected_feat=None, is_manual_index=False, delta_time=1/3):
     """
     Calculate the trajectory summaries for a given file fname, within a given time window
     (units of start time and end time are in frame numbers).
@@ -221,7 +221,7 @@ def tierpsy_trajectories_summary(
                 worm_feats = get_summary_stats(
                     w_ts_data, fps,  w_blobs, delta_time,
                     only_abs_ventral=only_abs_ventral,
-                    feat_selection=feat_selection
+                    selected_feat=selected_feat
                     ) # returns empty dataframe when w_ts_data is empty
                 worm_feats = pd.DataFrame(worm_feats).T
                 worm_feats = add_trajectory_info(worm_feats, w_ind, w_ts_data, fps)
@@ -243,7 +243,7 @@ def tierpsy_trajectories_summary(
 
 def tierpsy_plate_summary_augmented(
         fname, time_windows, time_units, only_abs_ventral = False,
-        feat_selection = None, is_manual_index = False, delta_time = 1/3,
+        selected_feat = None, is_manual_index = False, delta_time = 1/3,
         **fold_args):
 
     fps = read_fps(fname)
@@ -273,7 +273,7 @@ def tierpsy_plate_summary_augmented(
                 plate_feats = get_summary_stats(
                     timeseries_data_r, fps,  blob_features_r, delta_time,
                     only_abs_ventral=only_abs_ventral,
-                    feat_selection=feat_selection
+                    selected_feat=selected_feat
                     )
 
                 plate_feats = pd.DataFrame(plate_feats).T

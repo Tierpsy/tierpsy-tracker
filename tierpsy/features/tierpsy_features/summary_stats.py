@@ -9,7 +9,7 @@ Created on Mon Oct  2 14:24:25 2017
 
 from tierpsy.features.tierpsy_features.helper import get_n_worms_estimate, \
     get_delta_in_frames, add_derivatives
-from tierpsy.features.tierpsy_features.events import get_event_stats, event_region_labels
+from tierpsy.features.tierpsy_features.events import get_event_stats, event_region_labels, event_columns
 from tierpsy.features.tierpsy_features.path import get_path_extent_stats
 from tierpsy.features.tierpsy_features.features import timeseries_feats_columns, \
     ventral_signed_columns, path_curvature_columns, curvature_columns
@@ -263,80 +263,73 @@ def process_blob_data(blob_features, derivate_delta_time, fps):
 
     return blob_features, blob_cols
 
-def select_feat(data, keys_in, keys_ex, feat_set ):
-    """
-    TODO : delete if not needed
-    EM: select features
-    """
-    if (keys_in is None) and (keys_ex is None) and (feat_set is None):
-        return data
-    else:
-        if isinstance(data,list):
-            names = data
-        elif isinstance(data,pd.DataFrame):
-            names = data.columns.to_list()
-        elif isinstance(data,pd.Series):
-            names = data.index.to_list()
 
-        if feat_set is not None:
-            names = [x for x in set(names).intersection(set(feat_set))]
-        if key_in is not None:
-            names = [name for name in names if np.any([key in name for key in keys_in])]
-        if key_ex is not None:
-            names = [name for name in names if np.all([key not in name for key in keys_ex])]
-
-        if isinstance(data,list):
-            return names
-        elif isinstance(data,(pd.DataFrame,pd.Series)):
-            return data[names]
-
-def select_event_feat(keys_in, keys_ex, feat_set ):
-    """
-    EM: check if any event features need to be calculated
-    """
-    from tierpsy.features.tierpsy_features.events import event_columns, \
-        durations_columns, event_region_labels
-
-    if (keys_in is None) and (keys_ex is None) and (feat_set is None):
+def check_if_event_features(selected_feat):
+    if selected_feat is None:
         return True
-    else:
-        event_keys =
-        if feat_set is not None:
-            check1 = np.any(
-                [np.any([col in x for col in event_columns])
-                 for x in feat_set
-                 ])
-        if keys_in is not None:
-            pass
-        if keys_ex is not None:
-            pass
 
+    for ft in selected_feat:
+        if np.any([x in ft for x in event_columns]):
+            return True
+
+    return False
+
+def check_if_blob_features(selected_feat):
+    if selected_feat is None:
         return True
+
+    for ft in selected_feat:
+        if 'blob' in ft:
+            return True
+
+    return False
+
+
+def select_timeseries(
+        timeseries_feats_columns, ventral_signed_columns, feats2normalize,
+        selected_feat):
+
+    if selected_feat is None:
+        ts_cols_all, v_sign_cols, feats2norm = timeseries_feats_columns, ventral_signed_columns, feats2normalize
+    else:
+        ts_cols_all = [ts for ts in timeseries_feats_columns if np.any([ts in x for x in selected_feat])]
+        v_sign_cols = list(set(ventral_signed_columns) & set(ts_cols_all))
+        feats2norm = dict()
+        for key in feats2normalize.keys():
+            feats2norm[key] = list(set(feats2normalize[key]) & set(ts_cols_all))
+
+    ts_cols_norm = sum(feats2norm.values(), [])
+
+    return ts_cols_all, v_sign_cols, feats2norm, ts_cols_norm
 
 def get_summary_stats(timeseries_data,
                       fps,
                       blob_features = None,
                       derivate_delta_time = None,
                       only_abs_ventral = False,
-                      feat_selection = None
+                      selected_feat = None
                       ):
 
     if timeseries_data.size == 0:
         return pd.DataFrame([])
 
-    ts_cols_all, v_sign_cols, feats2norm = timeseries_feats_columns, ventral_signed_columns, feats2normalize
-    ts_cols_norm = sum(feats2norm.values(), [])
+    ts_cols_all, v_sign_cols, feats2norm, ts_cols_norm = select_timeseries(
+        timeseries_feats_columns, ventral_signed_columns, feats2normalize,
+        selected_feat)
 
     #summarize everything
     exp_feats = []
 
     ## event features
-    n_worms_estimate = get_n_worms_estimate(timeseries_data['timestamp'])
+    # EM: check if event features need to be calculated:
+    is_event_features = check_if_event_features(selected_feat)
 
-    event_stats_s = get_event_stats(timeseries_data, fps , n_worms_estimate)
+    if is_event_features:
+        n_worms_estimate = get_n_worms_estimate(timeseries_data['timestamp'])
 
-    # EM: select features
-    event_stats_s = select_feat(event_stats_s, *feat_selection)
+        event_stats_s = get_event_stats(timeseries_data, fps , n_worms_estimate)
+    else:
+        event_stats_s = pd.Series()
 
     ## timeseries features
     ##### simple
@@ -403,8 +396,10 @@ def get_summary_stats(timeseries_data,
 
         exp_feats.append(feat_stats_m_subdiv_v)
 
-
     if blob_features is not None:
+        # EM: check if blob features need to be calculated:
+        is_blob_features = check_if_blob_features(selected_feat)
+
         #I need to add the worm index and timesstamp before calculating the derivative
         blob_features = pd.concat((timeseries_data[index_colums], blob_features), axis=1)
 

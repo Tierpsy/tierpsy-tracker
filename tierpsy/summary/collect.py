@@ -9,6 +9,7 @@ import glob
 import datetime
 import tables
 import pandas as pd
+import numpy as np
 
 from tierpsy.helper.misc import TimeCounter, print_flush
 from tierpsy.summary.process_ow import ow_plate_summary, ow_trajectories_summary, ow_plate_summary_augmented
@@ -40,7 +41,7 @@ def check_in_list(x, list_of_x, x_name):
 def get_summary_func(
         feature_type, summary_type,
         time_windows_ints, time_units,
-        feat_selection,
+        selected_feat,
         dorsal_side_known,
         is_manual_index, **fold_args
         ):
@@ -53,7 +54,7 @@ def get_summary_func(
                 tierpsy_plate_summary,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
-                feat_selection = feat_selection,
+                selected_feat = selected_feat,
                 is_manual_index=is_manual_index
                 )
         elif summary_type == 'trajectory':
@@ -61,7 +62,7 @@ def get_summary_func(
                 tierpsy_trajectories_summary,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
-                feat_selection = feat_selection,
+                selected_feat = selected_feat,
                 is_manual_index=is_manual_index
                 )
         elif summary_type == 'plate_augmented':
@@ -69,7 +70,7 @@ def get_summary_func(
                 tierpsy_plate_summary_augmented,
                 time_windows=time_windows_ints, time_units=time_units,
                 only_abs_ventral = not dorsal_side_known,
-                feat_selection = feat_selection,
+                selected_feat = selected_feat,
                 is_manual_index=is_manual_index, **fold_args
                 )
 
@@ -153,26 +154,78 @@ def feat_set_parser(select_feat):
         selected_feat = None
     return selected_feat
 
-def select_parser(keywords_in, keywords_ex, select_feat):
+def drop_ventrally_signed(feat_names):
+    """
+    EM: drops the ventrally signed features
+    Param:
+        features_names = list of features names
+    Return:
+        filtered_names = list of features names without ventrally signed
+    """
+
+    absft = [ft for ft in feat_names if '_abs' in ft]
+    ventr = [ft.replace('_abs', '') for ft in absft]
+
+    filtered_names = list(set(feat_names).difference(set(ventr)))
+
+    return filtered_names
+
+def select_parser(
+        keywords_include, keywords_exclude, select_feat, dorsal_side_known):
     """
     EM: collects feature-selection related variables from the GUI, parses them
     to lists of strings and returns the lists bound together in a tuple
     (to make make it easier to pass together in other modules).
     """
+    # EM : get full path to feature set file
+    feat_set = feat_set_parser(select_feat)
 
     # EM : get list of keywords to include and to exclude
     # TODO: catch conflicts
     keywords_in = keywords_parser(keywords_include)
     keywords_ex = keywords_parser(keywords_exclude)
 
-    # EM : get full path to feature set file
-    selected_feat = feat_set_parser(select_feat)
-
-    if keywords_in is None and keywords_ex is None and selected_feat is None:
+    if keywords_include is None and keywords_exclude is None and select_feat is None and dorsal_side_known:
         return None
-    else:
-        return (keywords_in, keywords_ex, selected_feat)
 
+    if feat_set is None:
+        selected_feat = pd.read_csv(
+            os.path.join(AUX_FILES_DIR,'tierpsy_features_full_names.csv'),
+            header=None)[0].to_list()
+    else:
+        selected_feat = feat_set
+
+    if not dorsal_side_known:
+        selected_feat = drop_ventrally_signed(selected_feat)
+
+    if keywords_in is not None:
+        selected_feat = [ft for ft in selected_feat if np.any([x in ft for x in keywords_in])]
+    if keywords_ex is not None:
+        selected_feat = [ft for ft in selected_feat if np.all([x not in ft for x in keywords_ex])]
+
+    return selected_feat
+
+def select_and_sort_columns(df, selected_feat):
+    """
+    Sorts the columns of the feat summaries dataframe to make sure that each line
+    written in the features summaries file contains the same features with the same
+    order. If a feature has not been calculated in the df, then a nan value
+    is added.
+    """
+    if selected_feat is None:
+        selected_feat = pd.read_csv(
+            os.path.join(AUX_FILES_DIR,'tierpsy_features_full_names.csv'),
+            header=None)[0].to_list()
+
+    not_existing_cols = [col for col in selected_feat if col not in df.columns]
+
+    if len(not_existing_cols) > 0:
+        for col in not_existing_cols:
+            df[col] = np.nan
+
+    df = df[[x for x in feat_df_id_cols if x in df.columns] + selected_feat]
+
+    return df
 
 def make_df_filenames(fnames):
     """
@@ -233,14 +286,15 @@ def calculate_summaries(
     # EM: get lists of strings (in a tuple) defining the feature selection
     # from keywords_in,
     # keywords_ex and select_feat.
-    feat_selection = select_parser(keywords_in, keywords_ex, select_feat)
+    selected_feat = select_parser(
+        keywords_include, keywords_exclude, select_feat, dorsal_side_known)
 
     #get summary function
     # INPUT time windows time units here
     summary_func = get_summary_func(
         feature_type, summary_type,
         time_windows_ints, time_units,
-        feat_selection,
+        selected_feat,
         dorsal_side_known,
         is_manual_index, **fold_args)
 
@@ -253,10 +307,12 @@ def calculate_summaries(
         print_flush('No valid files found. Nothing to do here.')
         return None,None
 
+    # EM :Make df_files dataframe with filenames and file ids
+    df_files = make_df_filenames(fnames)
+
     # EM : Create features_summaries and filenames_summaries files and write headers
     fnames_files = []
     featsum_files = []
-    written_feat_names = []
     for iwin in range(len(time_windows_ints)):
         # EM : Create features_summaries and filenames_summaries files
         if select_feat != 'all':
@@ -274,8 +330,8 @@ def calculate_summaries(
             root_dir,'features_{}.csv'.format(win_save_base_name))
 
         fnamesum_headers = get_fnamesum_headers(
-            f2,feature_type,summary_type,iwin,time_windows_ints[iwin],
-            time_units,len(time_windows_ints),select_feat)
+            f2, feature_type, summary_type, iwin, time_windows_ints[iwin],
+            time_units, len(time_windows_ints), select_feat, df_files.columns.to_list())
         featsum_headers = get_featsum_headers(f1)
 
         with open(f1,'w') as fid:
@@ -286,10 +342,6 @@ def calculate_summaries(
 
         fnames_files.append(f1)
         featsum_files.append(f2)
-        written_feat_names.append(False)
-
-    # EM :Make df_files dataframe with filenames and file ids
-    df_files = make_df_filenames(fnames)
 
     progress_timer = TimeCounter('')
     def _displayProgress(n):
@@ -300,6 +352,8 @@ def calculate_summaries(
     _displayProgress(-1)
 
     # EM : Extract feature summaries from all the files for all time windows.
+    is_featnames_written = [False for i in range(len(time_windows_ints))]
+
     for ifile,row in df_files.iterrows():
         fname = row['file_name']
         file_id = row['file_id']
@@ -307,11 +361,13 @@ def calculate_summaries(
         summaries_per_win = summary_func(fname)
 
         for iwin,df in enumerate(summaries_per_win):
+
             f1 = fnames_files[iwin]
             f2 = featsum_files[iwin]
 
             try:
                 df.insert(0, 'file_id', file_id)
+                df = select_and_sort_columns(df, selected_feat)
             except (AttributeError, IOError, KeyError, tables.exceptions.HDF5ExtError, tables.exceptions.NoSuchNodeError):
                 continue
             else:
@@ -330,9 +386,9 @@ def calculate_summaries(
 
                     # Store line(s) of features summaries for the given file and given window
                     with open(f2,'a') as fid:
-                        if not written_feat_names[iwin]:
+                        if not is_featnames_written[iwin]:
                             df.to_csv(fid, header=True, index=False)
-                            written_feat_names[iwin] = True
+                            is_featnames_written[iwin] = True
                         else:
                             df.to_csv(fid, header=False, index=False)
 
@@ -351,7 +407,7 @@ def calculate_summaries(
 
 if __name__ == '__main__':
 
-    root_dir = '/Users/em812/Data/Tierpsy_GUI/test_results_2'
+    root_dir = '/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/20190808_subset'
     is_manual_index = False
     feature_type = 'tierpsy'
     # feature_type = 'openworm'
@@ -375,19 +431,20 @@ if __name__ == '__main__':
                  time_sample_seconds = 10*60
                  )
 
-    time_windows = '0:end' #'0:end:1000' #'0:end' # time_windows = '0:60,480:540'
+    time_windows = '0:150' #'0:end:1000' #'0:end' # time_windows = '0:60,480:540'
     time_units = 'frame numbers'
     select_feat = 'all' #'tierpsy_2k'
     keywords_include = ''
     keywords_exclude = '' #'curvature,velocity,norm,abs'
     abbreviate_features = False
+    dorsal_side_known = False
 
     df_files = calculate_summaries(
         root_dir, feature_type, summary_type, is_manual_index,
         time_windows, time_units,
         select_feat, keywords_include, keywords_exclude,
-        abbreviate_features,
-        **fold_args)
+        abbreviate_features, dorsal_side_known)
+        #**fold_args)
 
     # Luigi
 #    df_files, all_summaries = calculate_summaries(root_dir, feature_type,
