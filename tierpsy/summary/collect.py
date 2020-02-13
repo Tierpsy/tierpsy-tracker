@@ -181,11 +181,20 @@ def select_parser(
     feat_set = feat_set_parser(select_feat)
 
     # EM : get list of keywords to include and to exclude
-    # TODO: catch conflicts
     keywords_in = keywords_parser(keywords_include)
     keywords_ex = keywords_parser(keywords_exclude)
 
-    if keywords_include is None and keywords_exclude is None and select_feat is None and dorsal_side_known:
+    # EM : catch conflicts
+    if (keywords_in is not None) and (keywords_ex is not None):
+        if len(list(set(keywords_in) & set(keywords_ex))) > 0:
+            raise ValueError('Cannot accept the same keyword in both ' +
+                             'keywords_include and keywords_exclude.\n' +
+                             'Keyword(s) {} found in both lists.'.format(
+                                 list(set(keywords_in) & set(keywords_ex))))
+
+    if keywords_in is None and keywords_ex is None \
+        and feat_set is None and dorsal_side_known:
+
         return None
 
     if feat_set is None:
@@ -199,9 +208,15 @@ def select_parser(
         selected_feat = drop_ventrally_signed(selected_feat)
 
     if keywords_in is not None:
-        selected_feat = [ft for ft in selected_feat if np.any([x in ft for x in keywords_in])]
+        selected_feat = [
+            ft for ft in selected_feat
+            if np.any([x in ft for x in keywords_in])
+            ]
     if keywords_ex is not None:
-        selected_feat = [ft for ft in selected_feat if np.all([x not in ft for x in keywords_ex])]
+        selected_feat = [
+            ft for ft in selected_feat
+            if np.all([x not in ft for x in keywords_ex])
+            ]
 
     return selected_feat
 

@@ -7,7 +7,6 @@ Created on Mon Jun  4 10:45:29 2018
 """
 from tierpsy.features.tierpsy_features.summary_stats import get_n_worms_estimate
 from tierpsy.analysis.split_fov.helper import was_fov_split
-from tierpsy import AUX_FILES_DIR
 
 import random
 import math
@@ -106,8 +105,6 @@ def read_package_version(fname,
     return version
 
 def get_featsum_headers(fnamesum_fname):
-    from os.path import join
-    import pandas as pd
 
     header = ','.join(['# FILENAMES SUMMARY FILE', fnamesum_fname]) + '\n'
 
