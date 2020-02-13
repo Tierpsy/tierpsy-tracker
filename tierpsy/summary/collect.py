@@ -12,8 +12,10 @@ import pandas as pd
 import numpy as np
 
 from tierpsy.helper.misc import TimeCounter, print_flush
-from tierpsy.summary.process_ow import ow_plate_summary, ow_trajectories_summary, ow_plate_summary_augmented
-from tierpsy.summary.process_tierpsy import tierpsy_plate_summary, tierpsy_trajectories_summary, tierpsy_plate_summary_augmented
+from tierpsy.summary.process_ow import ow_plate_summary, \
+    ow_trajectories_summary, ow_plate_summary_augmented
+from tierpsy.summary.process_tierpsy import tierpsy_plate_summary, \
+    tierpsy_trajectories_summary, tierpsy_plate_summary_augmented
 from tierpsy import AUX_FILES_DIR
 from tierpsy.summary.helper import get_featsum_headers,get_fnamesum_headers
 
@@ -21,22 +23,30 @@ feature_files_ext = {'openworm' : ('_features.hdf5', '_feat_manual.hdf5'),
                      'tierpsy' : ('_featuresN.hdf5', '_featuresN.hdf5')
                      }
 FEAT_SET_DIR = os.path.join(AUX_FILES_DIR,'feat_sets')
-feature_sets_filenames = {'tierpsy_8' : 'tierpsy_8.csv', 'tierpsy_16' : 'tierpsy_16.csv',
-                          'tierpsy_256' : 'tierpsy_256.csv',
-                          'tierpsy_2k' : 'top2k_tierpsy_no_blob_no_eigen_only_abs_no_norm.csv'
-                          }
+feature_sets_filenames = {
+    'tierpsy_8' : 'tierpsy_8.csv',
+    'tierpsy_16' : 'tierpsy_16.csv',
+    'tierpsy_256' : 'tierpsy_256.csv',
+    'tierpsy_2k' : 'top2k_tierpsy_no_blob_no_eigen_only_abs_no_norm.csv'
+    }
 valid_feature_types = list(feature_files_ext.keys())
 valid_summary_types = ['plate', 'trajectory', 'plate_augmented']
 valid_time_windows_connector = ':'
 valid_time_windows_separator = ','
-time_windows_format_explain = 'Each time window must be defined by the start time and the end time connected by \'-\' (start_time-end_time). Different windows must be separated by {}. A sequence of equally sized windows can be defined with the format start_time:end_time:step.'.format(valid_time_windows_separator)
+time_windows_format_explain = \
+    'Each time window must be defined by the start time and the end time ' + \
+    'connected by \'-\' (start_time-end_time). Different windows must be ' + \
+    'separated by {}. '.format(valid_time_windows_separator) + \
+    'A sequence of equally sized windows can be defined with the format ' + \
+    'start_time:end_time:step.'
 
 feat_df_id_cols = ['file_id', 'well_name', 'is_good_well']
 
 def check_in_list(x, list_of_x, x_name):
     if not x in list_of_x:
-        raise ValueError('{} invalid {}. Valid options {}.'.format(x, x_name, list_of_x))
-
+        raise ValueError(
+            '{} invalid {}. Valid options {}.'.format(x, x_name, list_of_x)
+            )
 
 def get_summary_func(
         feature_type, summary_type,
@@ -46,7 +56,8 @@ def get_summary_func(
         is_manual_index, **fold_args
         ):
     """
-    Chooses the function used for the extraction of feature summaries based on the input from the GUI
+    Chooses the function used for the extraction of feature summaries based on
+    the input from the GUI
     """
     if feature_type == 'tierpsy':
         if summary_type == 'plate':
@@ -92,40 +103,66 @@ def time_windows_parser(time_windows):
         windows = [[0,-1]]
         return windows
     if valid_time_windows_connector not in time_windows:
-        raise ValueError('Invalid format of time windows: '+time_windows_format_explain)
+        raise ValueError(
+            'Invalid format of time windows: ' + time_windows_format_explain
+            )
         return
 
     # Remove spaces and replace end with -1
     windows = time_windows.replace(' ','').replace('end','-1')
-    # Split at ',' to separate time windows, then split each non-empty time window at '-' or ':'
-    windows = [x.split(valid_time_windows_connector) for x in windows.split(valid_time_windows_separator) if x]
+    # Split at ',' to separate time windows, then split each non-empty time
+    # window at ':'
+    windows = [x.split(valid_time_windows_connector)
+               for x in windows.split(valid_time_windows_separator) if x]
 
     # Convert to integers
     try:
         windows = [[int(x) for x in wdw] for wdw in windows]
     except ValueError:
-        print_flush('Time windows input could not be converted to list of integers.'+time_windows_format_explain)
+        print_flush(
+            'Time windows input could not be converted to list of integers.'+
+            time_windows_format_explain
+            )
         raise
     else:
         fin_windows = []
         for iwin,window in enumerate(windows):
             if len(window)==3:
                 if window[1]==-1:
-                    raise ValueError('Invalid format of time windows: When the format start_time:end_time:step is used, the end_time has to be defined explicitly in seconds or frames. It cannot be defined as \'end\' or \'-1\'.')
+                    raise ValueError(
+                        'Invalid format of time windows: When the format ' +
+                        'start_time:end_time:step is used, the end_time ' +
+                        'has to be defined explicitly in seconds or frames.' +
+                        ' It cannot be \'end\' or \'-1\'.')
                 else:
-                    assert window[0]<=window[1], "Invalid format of time windows: The end time of time window {}/{} cannot be smaller than the start time.".format(iwin+1,len(windows))
-                    assert window[2]<=window[1]-window[0], "Invalid format of time windows: The step size in time window {}/{} cannot be larger than the (end_time-start_time).".format(iwin+1,len(windows))
+                    assert window[0]<=window[1], \
+                        "Invalid format of time windows: The end time of " + \
+                        "time window {}/{} ".format(iwin+1,len(windows) + \
+                        "cannot be smaller than the start time.")
+                    assert window[2]<=window[1]-window[0], \
+                        "Invalid format of time windows: The step size in " + \
+                        "time window {}/{} ".format(iwin+1,len(windows)) + \
+                        "cannot be larger than the (end_time-start_time)."
                 start,end,step = window
-                step_wins = [[i,j] for i,j in zip(list(range(*window)),list(range(start+step,end,step))+[end])]
+                step_wins = [
+                    [i,j] for i,j in zip(
+                    list(range(*window)),
+                    list(range(start+step,end,step))+[end])
+                    ]
                 for add in step_wins:
                     fin_windows.append(add)
             elif len(window)==2:
                 if window[1]!=-1:
-                    assert window[0]<=window[1], "Invalid format of time windows: The end time of time window {}/{} cannot be smaller than the start time.".format(iwin+1,len(windows))
+                    assert window[0]<=window[1], \
+                        "Invalid format of time windows: The end time of " +\
+                        "time window {}/{} ".format(iwin+1,len(windows)) + \
+                        "cannot be smaller than the start time."
                 fin_windows.append(window)
             else:
-                ValueError('Invalid format of time windows: '+time_windows_format_explain)
-
+                ValueError(
+                    'Invalid format of time windows: ' +
+                    time_windows_format_explain
+                    )
         return fin_windows
 
 def keywords_parser(keywords):
@@ -147,7 +184,8 @@ def feat_set_parser(select_feat):
     EM : gets the full path of the file containing the selected feature set.
     """
     if select_feat in feature_sets_filenames.keys():
-        feat_set_file = os.path.join(FEAT_SET_DIR,feature_sets_filenames[select_feat])
+        feat_set_file = os.path.join(
+            FEAT_SET_DIR,feature_sets_filenames[select_feat])
         selected_feat = pd.read_csv(feat_set_file, header=None, index_col=None)
         selected_feat = selected_feat.values.flatten().tolist()
     else:
@@ -222,10 +260,10 @@ def select_parser(
 
 def select_and_sort_columns(df, selected_feat):
     """
-    Sorts the columns of the feat summaries dataframe to make sure that each line
-    written in the features summaries file contains the same features with the same
-    order. If a feature has not been calculated in the df, then a nan value
-    is added.
+    Sorts the columns of the feat summaries dataframe to make sure that each
+    line written in the features summaries file contains the same features with
+    the same order. If a feature has not been calculated in the df, then a nan
+    value is added.
     """
     if selected_feat is None:
         selected_feat = pd.read_csv(
@@ -244,7 +282,8 @@ def select_and_sort_columns(df, selected_feat):
 
 def make_df_filenames(fnames):
     """
-    EM : Create dataframe with filename summaries and time window info for every time window
+    EM : Create dataframe with filename summaries and time window info for
+    every time window
     """
     dd = tuple(zip(*enumerate(sorted(fnames))))
     df_files = pd.DataFrame({'file_id' : dd[0], 'file_name' : dd[1]})
@@ -325,7 +364,8 @@ def calculate_summaries(
     # EM :Make df_files dataframe with filenames and file ids
     df_files = make_df_filenames(fnames)
 
-    # EM : Create features_summaries and filenames_summaries files and write headers
+    # EM : Create features_summaries and filenames_summaries files
+    #      and write headers
     fnames_files = []
     featsum_files = []
     for iwin in range(len(time_windows_ints)):
@@ -346,7 +386,8 @@ def calculate_summaries(
 
         fnamesum_headers = get_fnamesum_headers(
             f2, feature_type, summary_type, iwin, time_windows_ints[iwin],
-            time_units, len(time_windows_ints), select_feat, df_files.columns.to_list())
+            time_units, len(time_windows_ints), select_feat,
+            df_files.columns.to_list())
         featsum_headers = get_featsum_headers(f1)
 
         with open(f1,'w') as fid:
@@ -361,7 +402,8 @@ def calculate_summaries(
     progress_timer = TimeCounter('')
     def _displayProgress(n):
         args = (n + 1, len(df_files), progress_timer.get_time_str())
-        dd = "Extracting features summary. File {} of {} done. Total time: {}".format(*args)
+        dd = "Extracting features summary. "
+        dd += "File {} of {} done. Total time: {}".format(*args)
         print_flush(dd)
 
     _displayProgress(-1)
@@ -383,7 +425,9 @@ def calculate_summaries(
             try:
                 df.insert(0, 'file_id', file_id)
                 df = select_and_sort_columns(df, selected_feat)
-            except (AttributeError, IOError, KeyError, tables.exceptions.HDF5ExtError, tables.exceptions.NoSuchNodeError):
+            except (AttributeError, IOError, KeyError,
+                    tables.exceptions.HDF5ExtError,
+                    tables.exceptions.NoSuchNodeError):
                 continue
             else:
                 # Get the filename summary line
@@ -392,14 +436,16 @@ def calculate_summaries(
                     filenames['is_good'] = True
                 # Store the filename summary line
                 with open(f1,'a') as fid:
-                    fid.write(','.join([str(x) for x in filenames.values])+"\n")
+                    fid.write(','.join([str(x)
+                                        for x in filenames.values])+"\n")
 
                 if not df.empty:
                     # Abbreviate names
                     if abbreviate_features:
                         df = shorten_feature_names(df)
 
-                    # Store line(s) of features summaries for the given file and given window
+                    # Store line(s) of features summaries for the given file
+                    # and given window
                     with open(f2,'a') as fid:
                         if not is_featnames_written[iwin]:
                             df.to_csv(fid, header=True, index=False)
@@ -422,7 +468,8 @@ def calculate_summaries(
 
 if __name__ == '__main__':
 
-    root_dir = '/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/20190808_subset'
+    root_dir = \
+        '/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/20190808_subset'
     is_manual_index = False
     feature_type = 'tierpsy'
     # feature_type = 'openworm'
@@ -431,8 +478,8 @@ if __name__ == '__main__':
     #summary_type = 'trajectory'
 
 # Luigi
-##    root_dir = '/Users/em812/Documents/OneDrive - Imperial College London/Eleni/Tierpsy_GUI/test_results_2'
-#    root_dir = '/Users/lferiani/Desktop/Data_FOVsplitter/evgeny/Results/20190808_subset'
+#    root_dir = \
+#        '/Users/lferiani/Desktop/Data_FOVsplitter/evgeny/Results/20190808_subset'
 #    is_manual_index = False
 #    feature_type = 'tierpsy'
 #    #feature_type = 'openworm'
@@ -446,7 +493,7 @@ if __name__ == '__main__':
                  time_sample_seconds = 10*60
                  )
 
-    time_windows = '0:150' #'0:end:1000' #'0:end' # time_windows = '0:60,480:540'
+    time_windows = '0:150' #'0:end:1000' #'0:end' #
     time_units = 'frame numbers'
     select_feat = 'all' #'tierpsy_2k'
     keywords_include = ''
@@ -462,7 +509,6 @@ if __name__ == '__main__':
         #**fold_args)
 
     # Luigi
-#    df_files, all_summaries = calculate_summaries(root_dir, feature_type,
-#                                                  summary_type, is_manual_index,
-#                                                  time_windows, time_units,
-#                                                  **fold_args)
+#    df_files, all_summaries = calculate_summaries(
+#         root_dir, feature_type, summary_type, is_manual_index,
+#         time_windows, time_units, **fold_args)
