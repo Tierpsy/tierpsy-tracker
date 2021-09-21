@@ -409,20 +409,41 @@ class HDF5VideoPlayerGUI(SimplePlayer):
             self.image_group = None
             self.isimgstore = False
 
+        if vfilename is None:
+            # cleanup completed, do nothing else
+            return
+
         self.vfilename = vfilename
         self.ui.lineEdit_video.setText(self.vfilename)
         self.videos_dir = self.vfilename.rpartition(os.sep)[0] + os.sep
 
         if vfilename.endswith('.hdf5'):
+
+            results_endings = (
+                'featuresN.hdf5', 'features.hdf5', 'skeletons.hdf5')
             try:
+                # check it is not a features file
+                assert vfilename.endswith(results_endings) is False, (
+                    "Please select a video file, not a results file.")
+                # try to open as a masked
                 self.fid = tables.File(vfilename, 'r')
             except (IOError, tables.exceptions.HDF5ExtError):
+                # error catching if it cannot open as hdf5
                 self.fid = None
                 self.image_group = None
                 QtWidgets.QMessageBox.critical(
                     self,
                     '',
                     "The selected file is not a valid .hdf5. Please select a valid file",
+                    QtWidgets.QMessageBox.Ok)
+                return
+            except AssertionError as ae:
+                self.fid = None
+                self.image_group = None
+                QtWidgets.QMessageBox.critical(
+                    self,
+                    '',
+                    ae.args[0],
                     QtWidgets.QMessageBox.Ok)
                 return
 

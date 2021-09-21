@@ -1,13 +1,16 @@
 import json
 import os
+import re
 import sys
 
 import numpy as np
 import pandas as pd
 import tables
 from PyQt5.QtCore import QPointF, Qt
-from PyQt5.QtGui import QPixmap, QImage, QPolygonF, QPen, QPainter, QColor
-from PyQt5.QtWidgets import QApplication, QFileDialog
+from PyQt5.QtGui import (
+    QPixmap, QImage, QPolygonF, QPen, QPainter, QColor)
+from PyQt5.QtWidgets import (
+    QApplication, QFileDialog, QMessageBox, QWidget, QPushButton)
 
 from tierpsy.gui.HDF5VideoPlayer import HDF5VideoPlayerGUI, LineEditDragDrop
 from tierpsy.gui.TrackerViewerAux_ui import Ui_TrackerViewerAux
@@ -109,7 +112,7 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
         self.ui.pushButton_skel.clicked.connect(self.getSkelFile)
         LineEditDragDrop(
             self.ui.lineEdit_skel,
-            self.updateSkelFile,
+            self.newSkelFileEvent,
             os.path.isfile)
 
     def getSkelFile(self):
@@ -119,7 +122,97 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
         if not os.path.exists(selected_file):
             return
 
-        self.updateSkelFile(selected_file)
+        self.newSkelFileEvent(selected_file)
+
+    def newSkelFileEvent(self, selected_file):
+        """
+        Given a new skeletons file name, take decisions on what to do based
+        also on the current value of the masked video field
+        new results, no mask => find mask, open both
+        new results, already a mask, they match => open new results
+        new results, already a mask, they don't match => ask user
+            - do nothing
+            - find matching masked video
+            - just open new skeletons
+        """
+
+        # both if there is or if there isn't an opened masked video
+        # I'll need to find the matching one
+        matching_maskname = results2maskedvideo(selected_file)
+        matching_imgstorename = results2imgstore(selected_file)
+
+        # skel, but no mask:
+        if (self.fid is None) and (self.isimgstore is False):
+            # if the masked file, or the raw video, exist, open them
+            self.updateSkelAndVideoFileFromSkelName(selected_file)
+
+        # already an opened masked videos file
+        elif self.vfilename in [matching_imgstorename, matching_maskname]:
+            # check if open video (could be raw video) matches results
+            # print("results match opened video, load results")
+            self.updateSkelFile(selected_file)
+
+        # masked video does not match
+        # ask user if to ignore mismatch, or reload video as well
+        else:
+            # print("results does not match opened video")
+            msgbox = QMessageBox(self)
+            msgbox.setIcon(QMessageBox.Question)
+            msgbox.setText(
+                ("The results file does not match the open video file\n"
+                    "Select an option:")
+                )
+            # cancel: do nothing
+            # No: just load the results
+            # Yes: reload both
+            open_results_anyway_msg = 'Open results anyway'
+            find_vid_open_both_msg = 'Open with matching video'
+            msgbox.addButton(QMessageBox.Cancel)
+            msgbox.addButton(
+                QPushButton(open_results_anyway_msg), QMessageBox.NoRole)
+            msgbox.addButton(
+                QPushButton(find_vid_open_both_msg), QMessageBox.YesRole)
+            msgbox.setDefaultButton(QMessageBox.Cancel)
+            msgbox.exec_()
+            qres = msgbox.clickedButton()
+            if (qres is None) or (qres.text() == 'Cancel'):
+                # print("button is None or Cancel, do nothing")
+                pass
+            elif qres.text() == open_results_anyway_msg:
+                # print("ignore mismatch, open results")
+                self.updateSkelFile(selected_file)
+            elif qres.text() == find_vid_open_both_msg:
+                # print("find matching video, open both")
+                self.updateSkelAndVideoFileFromSkelName(selected_file)
+            else:
+                print(qres)
+                print(qres.text())
+                print('This should never be triggered')
+
+        return
+
+    def updateSkelAndVideoFileFromSkelName(self, selected_skelfile):
+        # find the matching masked and raw video
+        matching_maskname = results2maskedvideo(selected_skelfile)
+        matching_imgstorename = results2imgstore(selected_skelfile)
+        # select the one that exists. if both exist, use masked
+        matching_vfilename = None
+        for fname in [matching_imgstorename, matching_maskname]:
+            if os.path.exists(fname):
+                matching_vfilename = fname
+        # open the existing video and results
+        if matching_vfilename is not None:
+            self.updateVideoFile(matching_vfilename)
+            self.updateSkelFile(selected_skelfile)
+        else:  # otherwise error out
+            err_msg = (
+                "Could not find matching video at\n"
+                f"{matching_maskname}\nnor at\n{matching_imgstorename}\n"
+                "Try selecting a video file instead"
+                )
+            QMessageBox.critical(self, '', err_msg, QMessageBox.Ok)
+
+        return
 
     def updateSkelFile(self, selected_file, dflt_skel_size = 5):
         self.trajectories_data = None
@@ -149,8 +242,9 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
                         'skeletons':'skeleton',
                         'ventral_contours':'contour_side1'
                     }
-                    if (not self.isimgstore) and ('/stage_position_pix' in self.fid):
-                        self.stage_position_pix = self.fid.get_node('/stage_position_pix')[:]
+                    if self.fid is not None:
+                        if (not self.isimgstore) and ('/stage_position_pix' in self.fid):
+                            self.stage_position_pix = self.fid.get_node('/stage_position_pix')[:]
 
                 else:
                     self.microns_per_pixel = 1.
@@ -410,11 +504,35 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
         p.end()
 
 
+def results2maskedvideo(results_path):
+    ending_regexp = r"\_(?:featuresN|features|skeletons)\.hdf5$"
+    maskedvideo_path = re.sub(ending_regexp, '.hdf5', results_path)
+    subfolder_regexp = r"(.*)/Results[^/]*/"
+    maskedvideo_path = re.sub(
+        subfolder_regexp, r'\1/MaskedVideos/', maskedvideo_path)
+    return maskedvideo_path
+
+def results2imgstore(results_path):
+    ending_regexp = r"\_(?:featuresN|features|skeletons)\.hdf5$"
+    maskedvideo_path = re.sub(ending_regexp, '.yaml', results_path)
+    subfolder_regexp = r"(.*)/Results[^/]*/"
+    maskedvideo_path = re.sub(
+        subfolder_regexp, r'\1/RawVideos/', maskedvideo_path)
+    return maskedvideo_path
+
+
+def test_results2maskedvideo():
+    assert results2maskedvideo('/evgeny/Results/20190808/Results/metadata_featuresN.hdf5') == '/evgeny/Results/20190808/MaskedVideos/metadata.hdf5'
+    assert results2maskedvideo('/evgeny/Results/20190808/metadata_featuresN.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
+    assert results2maskedvideo('/evgeny/Results_NN/20190808/metadata_featuresN.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
+    assert results2maskedvideo('/evgeny/Results/20190808/Results/metadata_skeletons.hdf5') == '/evgeny/Results/20190808/MaskedVideos/metadata.hdf5'
+    assert results2maskedvideo('/evgeny/Results/20190808/metadata_skeletons.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
+    assert results2maskedvideo('/evgeny/Results_NN/20190808/metadata_skeletons.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    # app = QApplication(sys.argv)
+    # ui = TrackerViewerAuxGUI()
+    # ui.show()
+    # sys.exit(app.exec_())
+    test_results2video()
 
-    ui = TrackerViewerAuxGUI()
-    ui.show()
-
-    sys.exit(app.exec_())
