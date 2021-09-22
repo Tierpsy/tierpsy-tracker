@@ -530,9 +530,9 @@ def test_results2maskedvideo():
     assert results2maskedvideo('/evgeny/Results_NN/20190808/metadata_skeletons.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
 
 if __name__ == '__main__':
-    # app = QApplication(sys.argv)
-    # ui = TrackerViewerAuxGUI()
-    # ui.show()
-    # sys.exit(app.exec_())
-    test_results2video()
+    app = QApplication(sys.argv)
+    ui = TrackerViewerAuxGUI()
+    ui.show()
+    sys.exit(app.exec_())
+    # test_results2video()
 
