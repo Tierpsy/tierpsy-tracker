@@ -17,6 +17,8 @@ except Exception:
 
 1.5.3alpha
 - Docker workflow for easy image building
+- Bug fixes:
+  * getFoodContourMorph: fixed bug in catching the output of cv2.findContours
 
 1.5.2
 - Bug fixes:
