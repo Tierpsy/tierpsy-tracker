@@ -75,7 +75,7 @@ def get_patch_mask(img, min_area = None, max_area = None, block_size = None):
     #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, disk(3))
 
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, disk(3), iterations=3)
-    #plt.imshow(mask)
+    # plt.imshow(mask)
     #%%
     #IM_LIMX = img.shape[0] - 2
     #IM_LIMY = img.shape[1] - 2
@@ -83,7 +83,7 @@ def get_patch_mask(img, min_area = None, max_area = None, block_size = None):
     # images)
 
     contours, hierarchy = cv2.findContours(
-        mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[:-2]
+        mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2:]
 
 
     # typically there are more bad contours therefore it is cheaper to draw

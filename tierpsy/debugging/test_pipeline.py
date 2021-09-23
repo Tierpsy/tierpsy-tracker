@@ -60,15 +60,23 @@ imgstore_name = '20191205/syngenta_screen_run1_bluelight_20191205_151104.2295680
 json_file = '/Users/lferiani/Hackathon/multiwell_tierpsy/ParametersFiles/loopbio_rig_96WP_upright_splitFOV_pytorch.json'
 # json_file = '/Users/lferiani/Hackathon/multiwell_tierpsy/ParametersFiles/loopbio_rig_96WP_upright_splitFOV_tensorflow.json'
 
-#%%
-rawvideosdir = rootdir + 'RawVideos/' + imgstore_name
-maskedvideosdir = rootdir + 'MaskedVideos/' + imgstore_name
-resultsdir = rootdir + 'Results/' + imgstore_name
+rootdir = '/Users/lferiani/Desktop/Iris/'
+rawvideosdir = rootdir + 'RawVideos/'
+maskedvideosdir = rootdir + 'MaskedVideos/'
+resultsdir = rootdir + 'Results/'
+raw_video = rawvideosdir + 'trimmed_16July_2021_LowPep_OP50_N2_2.wmv'
+json_file = rootdir + '16July_2021_LowPep_OP50_N2_2.json'
+skeletons_file = raw_video.replace('RawVideos', 'Results').replace('.wmv', '_skeletons.hdf5')
 
-raw_video = rawvideosdir + 'metadata.yaml'
-masked_image_file = maskedvideosdir + 'metadata.hdf5'
-features_file = resultsdir + 'metadata_featuresN.hdf5'
-skeletons_file = resultsdir + 'metadata_skeletons.hdf5'
+#%%
+# rawvideosdir = rootdir + 'RawVideos/' + imgstore_name
+# maskedvideosdir = rootdir + 'MaskedVideos/' + imgstore_name
+# resultsdir = rootdir + 'Results/' + imgstore_name
+
+# raw_video = rawvideosdir + 'metadata.yaml'
+# masked_image_file = maskedvideosdir + 'metadata.hdf5'
+# features_file = resultsdir + 'metadata_featuresN.hdf5'
+# skeletons_file = resultsdir + 'metadata_skeletons.hdf5'
 
 
 # restore features after previous step before testing
@@ -84,10 +92,7 @@ sys_argv_list = ['/Users/lferiani/Tierpsy/tierpsy-tracker/tierpsy/processing/Pro
                  '--masks_dir', maskedvideosdir,
                  '--results_dir', resultsdir,
                  '--json_file', json_file,
-                 '--analysis_checkpoints', 'COMPRESS',
-                                           'TRAJ_CREATE',
-                                           'TRAJ_JOIN',
-                                           'SKE_INIT']
+                 '--analysis_checkpoints', 'FOOD_CNT']
 
 #sys_argv_list = ['/Users/lferiani/Tierpsy/tierpsy-tracker/tierpsy/processing/ProcessLocal.py',
 #                 masked_image_file,
