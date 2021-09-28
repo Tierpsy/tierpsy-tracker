@@ -516,6 +516,10 @@ if __name__ == '__main__':
     with open(flist_fname, 'r') as fid:
         skel_files = fid.read().splitlines()
 
+    skel_files = [
+        f.replace('/Volumes/behavgenom$', str(bg_path)) for f in skel_files]
+
+
     out_dir = bg_path / 'Luigi/food_tests/'
 
     for skel_file in tqdm(skel_files):
