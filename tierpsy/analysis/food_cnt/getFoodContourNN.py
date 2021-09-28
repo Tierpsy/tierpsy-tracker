@@ -14,7 +14,8 @@ import os
 import numpy as np
 import cv2
 import warnings
-
+import time
+from scipy.stats import rankdata, zscore
 with warnings.catch_warnings():
     warnings.simplefilter(action='ignore', category=FutureWarning)
     from keras.models import load_model
@@ -273,8 +274,305 @@ def get_food_contour_nn(mask_file, model_path, _is_debug=False):
 
 
 
-if __name__ == '__main__':
-    mask_file = '/Users/ajaver/OneDrive - Imperial College London/optogenetics/Arantza/MaskedVideos/oig8/oig-8_ChR2_control_males_3_Ch1_11052017_161018.hdf5'
 
+
+def cnt_solidity_func(_cnt):
+    _hull = cv2.convexHull(_cnt)
+    return cv2.contourArea(_cnt) / cv2.contourArea(_hull)
+
+
+def avg_incnt_func(_cnt, img):
+    mask = np.zeros(img.shape, np.uint8)
+    mask = cv2.drawContours(mask, _cnt, 1, color=255).astype(np.uint8)
+    return cv2.mean(img, mask)[0]
+
+def eccentricity_func(_cnt):
+    moments = cv2.moments(_cnt)
+    a1 = (moments['mu20']+moments['mu02'])/2
+    a2 = np.sqrt(
+        4*moments['mu11']**2 + (moments['mu20']-moments['mu02'])**2
+        ) / 2
+    minor_axis = a1-a2
+    major_axis = a1+a2
+    eccentricity = np.sqrt(1-minor_axis/major_axis)
+    return eccentricity
+
+
+def rank_data(an_array, lower_is_better=True):
+    """return 0 for the best value.
+    best value is the maximum one, if lower_is_better == False,
+    otherwise it is the minimum.
+    e.g rank_data([0, 2, 1, 3], lower_is_better=False) returns [3, 1, 2, 0]
+    """
+    ranks = rankdata(an_array, method='min')
+    # default behaviour for scipy's rankdata is that lowest value => lowest rank
+    if lower_is_better:
+        ranks = ranks - 1  # -1 bc scipy's rank starts from 1
+    else:
+        ranks = len(an_array) - ranks
+    return ranks
+
+
+def get_best_scoring_cnt(cnts, food_proba):
+
+    # print(f'raw n contours {len(cnts)}')
+    # filter contours first to only keep the ones with a defined hull area
+    cnts = [
+        c for c in cnts if
+        (cv2.contourArea(cv2.convexHull(c)) > 1) and (cv2.contourArea(c) > 1)]
+
+    # calculate patches properties
+    solidities = [cnt_solidity_func(c) for c in cnts]
+    areas = [cv2.contourArea(c) for c in cnts]
+    perimeters = [cv2.arcLength(c, True) for c in cnts]
+    areas_over_perimeters = [a/p for a, p in zip(areas, perimeters)]
+    avg_probas = [avg_incnt_func(c, food_proba) for c in cnts]
+    # eccentricities = [eccentricity_func(c) for c in cnts]
+
+    # # normalise them
+    # sol_scores = rank_data(solidities, lower_is_better=False)
+    # area_scores = rank_data(areas, lower_is_better=False)
+    # aop_scores = rank_data(areas_over_perimeters, lower_is_better=False)
+    # avgprob_scores = rank_data(avg_probas, lower_is_better=False)
+    # # rank 0 means this entry had the minimum value (circles have low ecc)
+    # # ecc_scores = rank_data(eccentricities, lower_is_better=True)
+
+    # # total_rank is lowest the lowest the combined score
+    # # scoring low means it's highly likely to be food.
+    # # area should favour larger patches
+    # # avgprob should favour areas where the NN is more confident
+    # # solidity favours regions without convexity
+    # # area/perimeters should favour roundness
+    # total_score = (
+    #     sol_scores + area_scores + aop_scores + avgprob_scores)
+    # total_rank = rank_data(total_score, lower_is_better=True)
+
+    # cnt_out = cnts[np.argmin(total_rank)]
+
+    # normalise
+    # for all these quantities, the highest the more likely it's food
+    sol_scores = zscore(solidities)
+    area_scores = zscore(areas)
+    aop_scores = zscore(areas_over_perimeters)
+    avgprob_scores = zscore(avg_probas)
+
+    # square sum
+    total_score = np.sqrt(
+        sol_scores**2 + area_scores**2 + aop_scores**2 + avgprob_scores**2)
+
+    cnt_out = cnts[np.argmax(total_score)]
+
+
+    return cnt_out
+
+
+def new_get_food_contour_nn(mask_file, model_path, _is_debug=False):
+    '''
+    Get the food contour using a pretrained u-net model.
+    This function is faster if a preloaded model is given since it is very slow
+    to load the model and tensorflow.
+    '''
+    tic = time.time()
+    model = load_model(model_path)
+    print(f'load model toc: {time.time() - tic}s')
+
+    food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
+    #bgnd_images are only used in debug mode
+
+    patch_m = (food_prob>0.5).astype(np.uint8)
+
+    print(f'inference toc: {time.time() - tic}s')
+
+    if _is_debug:
+        import matplotlib.pylab as plt
+        plt.figure()
+        plt.imshow(patch_m)
+        plt.show()
+
+
+    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
+
+    # print(total_rank)
+    # print(np.argmin(total_rank))
+    # print(cnts[np.argmin(total_rank)])
+
+    # pick the contour with the largest solidity
+    # print(f'filtered {len(cnts)}')
+
+    if len(cnts) == 1:
+        cnts = cnts[0]
+    elif len(cnts) > 1:
+        # too many contours select the largest
+        # cnts = max(cnts, key=cv2.contourArea)
+        cnts = get_best_scoring_cnt(cnts, food_prob)
+    else:
+        return np.zeros([]), food_prob, 0.
+
+    # print("this should be one and be nice:")
+    # print(cnts)
+    assert len(cnts == 1)
+
+    if _is_debug:
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        plt.imshow(patch_m)
+        fig.gca().set_title('first patch_m')
+        plt.show()
+
+    # for some reason this detects the edge and finds the outer rim of said edge
+    # probably to make sure we hit the actual edge
+    # rather than being a little inside the food patch
+    patch_m = np.zeros(patch_m.shape, np.uint8)
+    patch_m = cv2.drawContours(patch_m, cnts, -1, color=1, thickness=cv2.FILLED)
+    patch_m = cv2.morphologyEx(patch_m, cv2.MORPH_CLOSE, disk(3), iterations=5)
+
+    if _is_debug:
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        plt.imshow(patch_m)
+        fig.gca().set_title('second pathc_m')
+        plt.show()
+
+
+    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
+
+    # print(len(cnts))
+    # print(cnts[0])
+
+    if len(cnts) == 1:
+        cnts = cnts[0]
+    elif len(cnts) > 1:
+        #too many contours select the largest
+        cnts = max(cnts, key=cv2.contourArea)
+    else:
+        return np.zeros([]), food_prob, 0.
+
+
+    hull = cv2.convexHull(cnts)
+    hull_area = cv2.contourArea(hull)
+    cnt_solidity = cv2.contourArea(cnts)/hull_area
+
+    food_cnt = np.squeeze(cnts).astype(np.float)
+    # rescale contour to be the same dimension as the original images
+    food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
+    food_cnt[:,1] *= original_size[1]/food_prob.shape[1]
+
+    if _is_debug:
+        import matplotlib.pylab as plt
+        img = bgnd_images[0]
+
+
+        #np.squeeze(food_cnt)
+        patch_n = np.zeros(img.shape, np.uint8)
+        patch_n = cv2.drawContours(patch_n, [cnts], 0, color=1, thickness=cv2.FILLED)
+        top = img.max()
+        bot = img.min()
+        img_n = (img-bot)/(top-bot)
+        img_rgb = np.repeat(img_n[..., None], 3, axis=2)
+        #img_rgb = img_rgb.astype(np.uint8)
+        img_rgb[...,0] = ((patch_n==0)*0.5 + 0.5)*img_rgb[...,0]
+
+        plt.figure()
+        plt.imshow(img_rgb)
+
+        plt.plot(hull[:,:,0], hull[:,:,1], 'r')
+        plt.title('solidity = {:.3}'.format(cnt_solidity))
+      #%%
+    return food_cnt, food_prob, cnt_solidity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    from matplotlib import pyplot as plt
+    from tierpsy.helper.params.models_path import DFLT_MODEL_FOOD_CONTOUR
+    from pathlib import Path
+    from tqdm import tqdm
+    # mask_file = '/Users/ajaver/OneDrive - Imperial College London/optogenetics/Arantza/MaskedVideos/oig8/oig-8_ChR2_control_males_3_Ch1_11052017_161018.hdf5'
+    mask_dir = Path('/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics')
+
+    # mask_files = mask_dir.rglob('*.hdf5')
+    # mask_files = [f for f in mask_files if 'MaskedVideos' in str(f)]
+    mask_files = []
+    mask_files += [
+        '/Users/lferiani/Desktop/Iris/new_setup/MaskedVideos/FoodSlowing_24Sept_acr-21_2.hdf5',
+        '/Users/lferiani/Desktop/Iris/old_setup/MaskedVideos/trimmed_16July_2021_LowPep_OP50_N2_2.hdf5',
+        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_2/Set6/Set6_Ch3_06092018_153230.hdf5',
+        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_2/Set7/Set7_Ch4_06092018_155840.hdf5',
+        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20181005/MaskedVideos/20181005NewAntipsychotics_1/Set1/Set1_Ch2_05102018_122946.hdf5',
+        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_3/Set9/Set9_Ch6_06092018_171910.hdf5',
+        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_3/Set1/Set1_Ch6_06092018_130401.hdf5',
+    ]
+    mask_files = [Path(f) for f in mask_files if isinstance(f, str)]
+    # mask_file = '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_1/Set1/Set1_Ch1_06092018_130343.hdf5'
     #mask_file = '/Volumes/behavgenom_archive$/Avelino/Worm_Rig_Tests/short_movies_new/MaskedVideos/Double_picking_020317/trp-4_worms6_food1-3_Set4_Pos5_Ch3_02032017_153225.hdf5'
-    food_cnt, food_prob,cnt_solidity = get_food_contour_nn(mask_file, _is_debug=True)
+
+
+    out_dir = Path('/Users/lferiani/Desktop/Iris/food_test/bad/')
+
+    for mask_file in tqdm(mask_files):
+
+        skel_file = Path(
+            str(mask_file)
+            .replace('MaskedVideos', 'Results')
+            .replace('.hdf5', '_skeletons.hdf5')
+            )
+        if not skel_file.exists():
+            continue
+
+        with tables.File(skel_file, 'r') as fid:
+            if '/food_cnt_coord' in fid:
+                old_food_cnt = fid.get_node('/food_cnt_coord')[:]
+                is_from_file = True
+            else:
+                old_food_cnt, old_food_prob,old_cnt_solidity = (
+                    get_food_contour_nn(
+                        mask_file, DFLT_MODEL_FOOD_CONTOUR, _is_debug=False)
+                    )
+                is_from_file = False
+
+        old_circx, old_circy = old_food_cnt.T
+
+        food_cnt, food_prob,cnt_solidity = new_get_food_contour_nn(
+            mask_file, DFLT_MODEL_FOOD_CONTOUR, _is_debug=False)
+        circx, circy = food_cnt.T
+
+
+        try:
+            with tables.File(mask_file, 'r') as fid:
+                img = fid.get_node('/full_data')[0].copy()
+        except:
+            print(f'cant get full_data from {mask_file}')
+            continue
+
+
+        fig = plt.figure()
+        plt.imshow(img, cmap='gray')
+        plt.plot(circx, circy)
+        if is_from_file:
+            color = 'g'
+        else:
+            color = 'r'
+        plt.plot(old_circx, old_circy, color, linestyle='--')
+        plt.show()
+        plt.pause(0.2)
+
+        out_name = out_dir / mask_file.with_suffix('.png').name
+        fig.savefig(out_name, dpi=600)
+        plt.pause(0.2)
+
+        plt.close('all')
+
