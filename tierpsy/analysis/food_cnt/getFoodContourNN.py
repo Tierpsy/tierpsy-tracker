@@ -501,36 +501,31 @@ if __name__ == '__main__':
     from tierpsy.helper.params.models_path import DFLT_MODEL_FOOD_CONTOUR
     from pathlib import Path
     from tqdm import tqdm
+    import sys
     # mask_file = '/Users/ajaver/OneDrive - Imperial College London/optogenetics/Arantza/MaskedVideos/oig8/oig-8_ChR2_control_males_3_Ch1_11052017_161018.hdf5'
-    mask_dir = Path('/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics')
 
-    # mask_files = mask_dir.rglob('*.hdf5')
-    # mask_files = [f for f in mask_files if 'MaskedVideos' in str(f)]
-    mask_files = []
-    mask_files += [
-        '/Users/lferiani/Desktop/Iris/new_setup/MaskedVideos/FoodSlowing_24Sept_acr-21_2.hdf5',
-        '/Users/lferiani/Desktop/Iris/old_setup/MaskedVideos/trimmed_16July_2021_LowPep_OP50_N2_2.hdf5',
-        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_2/Set6/Set6_Ch3_06092018_153230.hdf5',
-        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_2/Set7/Set7_Ch4_06092018_155840.hdf5',
-        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20181005/MaskedVideos/20181005NewAntipsychotics_1/Set1/Set1_Ch2_05102018_122946.hdf5',
-        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_3/Set9/Set9_Ch6_06092018_171910.hdf5',
-        '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_3/Set1/Set1_Ch6_06092018_130401.hdf5',
-    ]
-    mask_files = [Path(f) for f in mask_files if isinstance(f, str)]
-    # mask_file = '/Volumes/behavgenom$/Ida/Data/Phenix/Antipsychotics/20180906/MaskedVideos/20180906NewAntipsychotics_1/Set1/Set1_Ch1_06092018_130343.hdf5'
-    #mask_file = '/Volumes/behavgenom_archive$/Avelino/Worm_Rig_Tests/short_movies_new/MaskedVideos/Double_picking_020317/trp-4_worms6_food1-3_Set4_Pos5_Ch3_02032017_153225.hdf5'
+    if sys.platform == 'darwin':
+        bg_path = Path('/Volumes/behavgenom$')
+    elif sys.platform == 'linux':
+        bg_path = Path.home() / 'net' / 'behavgenom$'
+    else:
+        raise Exception('not coded for this platform')
 
+    flist_fname = bg_path / 'Luigi/exchange/all_skels_with_food.txt'
 
-    out_dir = Path('/Users/lferiani/Desktop/Iris/food_test/bad/')
+    with open(flist_fname, 'r') as fid:
+        skel_files = fid.read().splitlines()
 
-    for mask_file in tqdm(mask_files):
+    out_dir = bg_path / 'Luigi/food_tests/'
 
-        skel_file = Path(
-            str(mask_file)
-            .replace('MaskedVideos', 'Results')
-            .replace('.hdf5', '_skeletons.hdf5')
+    for skel_file in tqdm(skel_files):
+
+        mask_file = Path(
+            str(skel_file)
+            .replace('Results','MaskedVideos')
+            .replace('_skeletons.hdf5', '.hdf5')
             )
-        if not skel_file.exists():
+        if not mask_file.exists():
             continue
 
         with tables.File(skel_file, 'r') as fid:
