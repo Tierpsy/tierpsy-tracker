@@ -196,14 +196,12 @@ def get_food_prob(mask_file, model, max_bgnd_images = 2, _is_debug = False, resi
     return Y_pred, original_size, bgnd_s
 
 
-def get_food_contour_nn(mask_file, model_path, _is_debug=False):
+def get_food_contour_nn(mask_file, model, _is_debug=False):
     '''
     Get the food contour using a pretrained u-net model.
     This function is faster if a preloaded model is given since it is very slow
     to load the model and tensorflow.
     '''
-
-    model = load_model(model_path)
 
     food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
     #bgnd_images are only used in debug mode
@@ -365,15 +363,13 @@ def get_best_scoring_cnt(cnts, food_proba):
     return cnt_out
 
 
-def new_get_food_contour_nn(mask_file, model_path, _is_debug=False):
+def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     '''
     Get the food contour using a pretrained u-net model.
     This function is faster if a preloaded model is given since it is very slow
     to load the model and tensorflow.
     '''
     tic = time.time()
-    model = load_model(model_path)
-    print(f'load model toc: {time.time() - tic}s')
 
     food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
     #bgnd_images are only used in debug mode
@@ -523,6 +519,10 @@ if __name__ == '__main__':
     out_dir = bg_path / 'Luigi/food_tests/'
     out_log = out_dir / 'memlog.txt'
 
+    # load model now to prevent memory leak
+    food_model = load_model(DFLT_MODEL_FOOD_CONTOUR)
+
+
     for skel_file in tqdm(skel_files):
 
         mask_file = Path(
@@ -540,14 +540,14 @@ if __name__ == '__main__':
             else:
                 old_food_cnt, old_food_prob,old_cnt_solidity = (
                     get_food_contour_nn(
-                        mask_file, DFLT_MODEL_FOOD_CONTOUR, _is_debug=False)
+                        mask_file, food_model, _is_debug=False)
                     )
                 is_from_file = False
 
         old_circx, old_circy = old_food_cnt.T
 
         food_cnt, food_prob,cnt_solidity = new_get_food_contour_nn(
-            mask_file, DFLT_MODEL_FOOD_CONTOUR, _is_debug=False)
+            mask_file, food_model, _is_debug=False)
         circx, circy = food_cnt.T
 
 
