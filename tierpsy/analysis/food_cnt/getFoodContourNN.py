@@ -168,33 +168,32 @@ def get_food_prob(mask_file, model, max_bgnd_images = 2, _is_debug = False, resi
     with tables.File(mask_file, 'r') as fid:
         if not '/full_data' in fid:
             raise ValueError('The mask file {} does not content the /full_data dataset.'.format(mask_file))
-
         bgnd_o = fid.get_node('/full_data')[:max_bgnd_images].copy()
 
-        assert bgnd_o.ndim == 3
-        if bgnd_o.shape[0] > 1:
-            bgnd = [np.max(bgnd_o[i:i+1], axis=0) for i in range(bgnd_o.shape[0]-1)]
-        else:
-            bgnd = [np.squeeze(bgnd_o)]
+    assert bgnd_o.ndim == 3
+    if bgnd_o.shape[0] > 1:
+        bgnd = [np.max(bgnd_o[i:i+1], axis=0) for i in range(bgnd_o.shape[0]-1)]
+    else:
+        bgnd = [np.squeeze(bgnd_o)]
 
-        min_size = min(bgnd[0].shape)
-        resize_factor = min(resizing_size, min_size)/min_size
-        dsize = tuple(int(x*resize_factor) for x in bgnd[0].shape[::-1])
+    min_size = min(bgnd[0].shape)
+    resize_factor = min(resizing_size, min_size)/min_size
+    dsize = tuple(int(x*resize_factor) for x in bgnd[0].shape[::-1])
 
-        bgnd_s = [cv2.resize(x, dsize) for x in bgnd]
-        for b_img in bgnd_s:
-            Y_pred = get_unet_prediction(b_img, model, n_flips=1)
+    bgnd_s = [cv2.resize(x, dsize) for x in bgnd]
+    for b_img in bgnd_s:
+        Y_pred = get_unet_prediction(b_img, model, n_flips=1)
 
-            if _is_debug:
-                import matplotlib.pylab as plt
-                plt.figure()
-                plt.subplot(1,2,1)
-                plt.imshow(b_img, cmap='gray')
-                plt.subplot(1, 2,2)
-                plt.imshow(Y_pred, interpolation='none')
+        if _is_debug:
+            import matplotlib.pylab as plt
+            plt.figure()
+            plt.subplot(1,2,1)
+            plt.imshow(b_img, cmap='gray')
+            plt.subplot(1, 2,2)
+            plt.imshow(Y_pred, interpolation='none')
 
-        original_size = bgnd[0].shape
-        return Y_pred, original_size, bgnd_s
+    original_size = bgnd[0].shape
+    return Y_pred, original_size, bgnd_s
 
 
 def get_food_contour_nn(mask_file, model_path, _is_debug=False):
