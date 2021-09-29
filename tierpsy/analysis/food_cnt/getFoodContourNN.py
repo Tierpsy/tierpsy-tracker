@@ -578,10 +578,10 @@ if __name__ == '__main__':
 
         if sys.platform == 'linux':
             _, used_m, free_m = os.popen(
-                'free -t -m').readlines()[-1].split()[1:]
+                'free -th').readlines()[-1].split()[1:]
             with open(out_log, 'a') as fout:
                 print(
-                    f'free: {free_m}, used:{used_m}, file:{skel_file}\n',
+                    f'free: {free_m}, used:{used_m}, file:{skel_file}',
                     file=fout)
 
 
