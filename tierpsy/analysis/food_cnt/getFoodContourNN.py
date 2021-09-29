@@ -169,7 +169,7 @@ def get_food_prob(mask_file, model, max_bgnd_images = 2, _is_debug = False, resi
         if not '/full_data' in fid:
             raise ValueError('The mask file {} does not content the /full_data dataset.'.format(mask_file))
 
-        bgnd_o = fid.get_node('/full_data')[:max_bgnd_images]
+        bgnd_o = fid.get_node('/full_data')[:max_bgnd_images].copy()
 
         assert bgnd_o.ndim == 3
         if bgnd_o.shape[0] > 1:
@@ -502,6 +502,7 @@ if __name__ == '__main__':
     from pathlib import Path
     from tqdm import tqdm
     import sys
+    import os
     # mask_file = '/Users/ajaver/OneDrive - Imperial College London/optogenetics/Arantza/MaskedVideos/oig8/oig-8_ChR2_control_males_3_Ch1_11052017_161018.hdf5'
 
     if sys.platform == 'darwin':
@@ -511,7 +512,7 @@ if __name__ == '__main__':
     else:
         raise Exception('not coded for this platform')
 
-    flist_fname = bg_path / 'Luigi/exchange/all_skels_with_food.txt'
+    flist_fname = bg_path / 'Luigi/exchange/all_skels_with_food_archive.txt'
 
     with open(flist_fname, 'r') as fid:
         skel_files = fid.read().splitlines()
@@ -521,6 +522,7 @@ if __name__ == '__main__':
 
 
     out_dir = bg_path / 'Luigi/food_tests/'
+    out_log = out_dir / 'memlog.txt'
 
     for skel_file in tqdm(skel_files):
 
@@ -534,7 +536,7 @@ if __name__ == '__main__':
 
         with tables.File(skel_file, 'r') as fid:
             if '/food_cnt_coord' in fid:
-                old_food_cnt = fid.get_node('/food_cnt_coord')[:]
+                old_food_cnt = fid.get_node('/food_cnt_coord')[:].copy()
                 is_from_file = True
             else:
                 old_food_cnt, old_food_prob,old_cnt_solidity = (
@@ -574,4 +576,13 @@ if __name__ == '__main__':
         plt.pause(0.2)
 
         plt.close('all')
+
+        if sys.platform == 'linux':
+            _, used_m, free_m = os.popen(
+                'free -t -m').readlines()[-1].split()[1:]
+            with open(out_log, 'a') as fout:
+                print(
+                    f'free: {free_m}, used:{used_m}, file:{skel_file}\n',
+                    file=fout)
+
 
