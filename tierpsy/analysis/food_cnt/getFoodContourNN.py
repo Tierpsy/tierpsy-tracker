@@ -553,10 +553,10 @@ if __name__ == '__main__':
 
 
         food_mask = cv2.drawContours(
-            np.zeros(food_prob.shape), food_cnt , -1,
+            np.zeros(food_prob.shape), [food_cnt] , -1,
             color=1, thickness=cv2.FILLED).astype(bool)
         old_food_mask = cv2.drawContours(
-            np.zeros(food_mask.shape), old_food_cnt , -1,
+            np.zeros(food_mask.shape), [old_food_cnt] , -1,
             color=1, thickness=cv2.FILLED).astype(bool)
 
         food_IoU = (
