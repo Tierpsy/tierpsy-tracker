@@ -518,6 +518,7 @@ if __name__ == '__main__':
 
     out_dir = bg_path / 'Luigi/food_tests/'
     out_log = out_dir / 'memlog.txt'
+    out_data = out_dir / 'IoUs.csv'
 
     # load model now to prevent memory leak
     food_model = load_model(DFLT_MODEL_FOOD_CONTOUR)
@@ -551,6 +552,21 @@ if __name__ == '__main__':
         circx, circy = food_cnt.T
 
 
+        food_mask = cv2.drawContours(
+            np.zeros(food_prob.shape), food_cnt , -1,
+            color=1, thickness=cv2.FILLED).astype(bool)
+        old_food_mask = cv2.drawContours(
+            np.zeros(food_mask.shape), old_food_cnt , -1,
+            color=1, thickness=cv2.FILLED).astype(bool)
+
+        food_IoU = (
+            np.sum(np.logical_and(food_mask, old_food_mask)) /
+            np.sum(np.logical_or(food_mask, old_food_mask))
+            )
+
+        with open(out_data, 'a') as fid:
+            print(f'{mask_file},{food_IoU}', file=fid)
+
         try:
             with tables.File(mask_file, 'r') as fid:
                 img = fid.get_node('/full_data')[0].copy()
@@ -559,22 +575,23 @@ if __name__ == '__main__':
             continue
 
 
-        fig = plt.figure()
-        plt.imshow(img, cmap='gray')
-        plt.plot(circx, circy)
-        if is_from_file:
-            color = 'g'
-        else:
-            color = 'r'
-        plt.plot(old_circx, old_circy, color, linestyle='--')
-        plt.show()
-        plt.pause(0.2)
+        if not out_name.exists():
+            fig = plt.figure()
+            plt.imshow(img, cmap='gray')
+            plt.plot(circx, circy)
+            if is_from_file:
+                color = 'g'
+            else:
+                color = 'r'
+            plt.plot(old_circx, old_circy, color, linestyle='--')
+            plt.show()
+            plt.pause(0.2)
 
-        out_name = out_dir / mask_file.with_suffix('.png').name
-        fig.savefig(out_name, dpi=600)
-        plt.pause(0.2)
+            out_name = out_dir / mask_file.with_suffix('.png').name
+            fig.savefig(out_name, dpi=600)
+            plt.pause(0.2)
 
-        plt.close('all')
+            plt.close('all')
 
         if sys.platform == 'linux':
             _, used_m, free_m = os.popen(
