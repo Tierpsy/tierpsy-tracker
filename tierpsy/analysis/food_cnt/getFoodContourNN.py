@@ -447,7 +447,11 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     hull_area = cv2.contourArea(hull)
     cnt_solidity = cv2.contourArea(cnts)/hull_area
 
+    print(cnt)
+    print(len(cnt))
     food_cnt = np.squeeze(cnts).astype(np.float)
+    print(food_cnt)
+    print(len(food_cnt))
     # rescale contour to be the same dimension as the original images
     food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
     food_cnt[:,1] *= original_size[1]/food_prob.shape[1]
