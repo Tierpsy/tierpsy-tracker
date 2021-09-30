@@ -583,6 +583,7 @@ if __name__ == '__main__':
             print(f'{mask_file},{food_IoU}', file=fid)
 
 
+        out_name = out_dir / mask_file.with_suffix('.png').name
         if not out_name.exists():
             fig = plt.figure()
             plt.imshow(img, cmap='gray')
@@ -595,7 +596,6 @@ if __name__ == '__main__':
             plt.show()
             plt.pause(0.2)
 
-            out_name = out_dir / mask_file.with_suffix('.png').name
             fig.savefig(out_name, dpi=600)
             plt.pause(0.2)
 
