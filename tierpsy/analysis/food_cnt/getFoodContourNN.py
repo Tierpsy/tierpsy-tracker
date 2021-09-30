@@ -14,7 +14,6 @@ import os
 import numpy as np
 import cv2
 import warnings
-import time
 from scipy.stats import rankdata, zscore
 with warnings.catch_warnings():
     warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -369,14 +368,11 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     This function is faster if a preloaded model is given since it is very slow
     to load the model and tensorflow.
     '''
-    tic = time.time()
 
     food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
     #bgnd_images are only used in debug mode
 
     patch_m = (food_prob>0.5).astype(np.uint8)
-
-    print(f'inference toc: {time.time() - tic}s')
 
     if _is_debug:
         import matplotlib.pylab as plt
@@ -447,8 +443,6 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     hull_area = cv2.contourArea(hull)
     cnt_solidity = cv2.contourArea(cnts)/hull_area
 
-    print(cnts)
-    print(len(cnts))
     food_cnt = np.squeeze(cnts).astype(np.float)
     # rescale contour to be the same dimension as the original images
     food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
@@ -562,8 +556,6 @@ if __name__ == '__main__':
             print(f'cant get full_data from {mask_file}')
             continue
 
-        print([food_cnt])
-        print(len([food_cnt]))
 
         food_mask = cv2.drawContours(
             np.zeros(img.shape, np.uint8), [food_cnt.astype(int)] , -1,
