@@ -552,12 +552,21 @@ if __name__ == '__main__':
         circx, circy = food_cnt.T
 
 
+
+        try:
+            with tables.File(mask_file, 'r') as fid:
+                img = fid.get_node('/full_data')[0].copy()
+        except:
+            print(f'cant get full_data from {mask_file}')
+            continue
+
+
         food_mask = cv2.drawContours(
-            np.zeros(food_prob.shape, np.uint8), [food_cnt] , -1,
+            np.zeros(img.shape, np.uint8), [food_cnt] , -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
         old_food_mask = cv2.drawContours(
-            np.zeros(food_mask.shape, np.uint8), [old_food_cnt] , -1,
+            np.zeros(img.shape, np.uint8), [old_food_cnt] , -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
 
@@ -568,13 +577,6 @@ if __name__ == '__main__':
 
         with open(out_data, 'a') as fid:
             print(f'{mask_file},{food_IoU}', file=fid)
-
-        try:
-            with tables.File(mask_file, 'r') as fid:
-                img = fid.get_node('/full_data')[0].copy()
-        except:
-            print(f'cant get full_data from {mask_file}')
-            continue
 
 
         if not out_name.exists():
