@@ -450,8 +450,6 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     print(cnts)
     print(len(cnts))
     food_cnt = np.squeeze(cnts).astype(np.float)
-    print(food_cnt)
-    print(len(food_cnt))
     # rescale contour to be the same dimension as the original images
     food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
     food_cnt[:,1] *= original_size[1]/food_prob.shape[1]
@@ -564,13 +562,15 @@ if __name__ == '__main__':
             print(f'cant get full_data from {mask_file}')
             continue
 
+        print([food_cnt])
+        print(len([food_cnt]))
 
         food_mask = cv2.drawContours(
-            np.zeros(img.shape, np.uint8), [food_cnt] , -1,
+            np.zeros(img.shape, np.uint8), [food_cnt.astype(int)] , -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
         old_food_mask = cv2.drawContours(
-            np.zeros(img.shape, np.uint8), [old_food_cnt] , -1,
+            np.zeros(img.shape, np.uint8), [old_food_cnt.astype(int)] , -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
 
