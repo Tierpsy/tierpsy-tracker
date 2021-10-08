@@ -347,10 +347,13 @@ def get_best_scoring_cnt(cnts, food_proba):
 
     # normalise
     # for all these quantities, the highest the more likely it's food
-    sol_scores = zscore(solidities)
-    area_scores = zscore(areas)
-    aop_scores = zscore(areas_over_perimeters)
-    avgprob_scores = zscore(avg_probas)
+    # To then use euclidean distance I need to have these defined positive,
+    # otherwise a contour that scores really low on all the indices will
+    # end up scoring highly
+    sol_scores = np.exp(zscore(solidities))
+    area_scores = np.exp(zscore(areas))
+    aop_scores = np.exp(zscore(areas_over_perimeters))
+    avgprob_scores = np.exp(zscore(avg_probas))
 
     # square sum
     total_score = np.sqrt(
