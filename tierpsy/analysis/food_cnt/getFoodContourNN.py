@@ -8,6 +8,7 @@ Created on Tue Jul 18 16:55:14 2017
 Get food contour using a pre-trained neural network
 
 """
+# %%
 
 import tables
 import os
@@ -309,58 +310,45 @@ def rank_data(an_array, lower_is_better=True):
     return ranks
 
 
-def get_best_scoring_cnt(cnts, food_proba):
+def get_best_scoring_cnt(cnts, food_proba, _is_debug=False):
 
     # print(f'raw n contours {len(cnts)}')
-    # filter contours first to only keep the ones with a defined hull area
-    cnts = [
-        c for c in cnts if
-        (cv2.contourArea(cv2.convexHull(c)) > 1) and (cv2.contourArea(c) > 1)]
 
     # calculate patches properties
-    solidities = [cnt_solidity_func(c) for c in cnts]
-    areas = [cv2.contourArea(c) for c in cnts]
-    perimeters = [cv2.arcLength(c, True) for c in cnts]
-    areas_over_perimeters = [a/p for a, p in zip(areas, perimeters)]
-    avg_probas = [avg_incnt_func(c, food_proba) for c in cnts]
+    solidities = np.array([cnt_solidity_func(c) for c in cnts])
+    areas = np.array([cv2.contourArea(c) for c in cnts])
+    perimeters = np.array([cv2.arcLength(c, True) for c in cnts])
+    areas_over_perimeters = np.array([a/p for a, p in zip(areas, perimeters)])
+    avg_probas = np.array([avg_incnt_func(c, food_proba) for c in cnts])
     # eccentricities = [eccentricity_func(c) for c in cnts]
 
-    # # normalise them
-    # sol_scores = rank_data(solidities, lower_is_better=False)
-    # area_scores = rank_data(areas, lower_is_better=False)
-    # aop_scores = rank_data(areas_over_perimeters, lower_is_better=False)
-    # avgprob_scores = rank_data(avg_probas, lower_is_better=False)
-    # # rank 0 means this entry had the minimum value (circles have low ecc)
-    # # ecc_scores = rank_data(eccentricities, lower_is_better=True)
-
-    # # total_rank is lowest the lowest the combined score
-    # # scoring low means it's highly likely to be food.
-    # # area should favour larger patches
-    # # avgprob should favour areas where the NN is more confident
-    # # solidity favours regions without convexity
-    # # area/perimeters should favour roundness
-    # total_score = (
-    #     sol_scores + area_scores + aop_scores + avgprob_scores)
-    # total_rank = rank_data(total_score, lower_is_better=True)
-
-    # cnt_out = cnts[np.argmin(total_rank)]
+    # normalise area and area over perimeter
+    # just divide by the maximum, I don't want to lose the relative values if
+    # it's only two regions
+    areas_norm = areas / np.max(areas)
+    aop_norm = areas_over_perimeters / np.max(areas_over_perimeters)
 
     # normalise
     # for all these quantities, the highest the more likely it's food
-    # To then use euclidean distance I need to have these defined positive,
-    # otherwise a contour that scores really low on all the indices will
-    # end up scoring highly
-    sol_scores = np.exp(zscore(solidities))
-    area_scores = np.exp(zscore(areas))
-    aop_scores = np.exp(zscore(areas_over_perimeters))
-    avgprob_scores = np.exp(zscore(avg_probas))
+    # and they're all defined positive
 
     # square sum
     total_score = np.sqrt(
-        sol_scores**2 + area_scores**2 + aop_scores**2 + avgprob_scores**2)
+        solidities**2 + areas_norm**2 + aop_norm**2 + avg_probas**2)
 
     cnt_out = cnts[np.argmax(total_score)]
 
+    if _is_debug:
+        print({
+            'area': areas,
+            'area_norm': areas_norm,
+            'aop': areas_over_perimeters,
+            'aop_normalised': aop_norm,
+            'solidity': solidities,
+            'avgprob': avg_probas,
+            })
+
+        print(total_score)
 
     return cnt_out
 
@@ -386,6 +374,13 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
 
     cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
 
+    # filter contours first to only keep the ones with a defined hull area
+    cnts = [
+        c for c in cnts if
+        (cv2.contourArea(cv2.convexHull(c)) > 1) and
+        (cv2.contourArea(c) > 1)
+        ]
+
     # print(total_rank)
     # print(np.argmin(total_rank))
     # print(cnts[np.argmin(total_rank)])
@@ -398,7 +393,7 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     elif len(cnts) > 1:
         # too many contours select the largest
         # cnts = max(cnts, key=cv2.contourArea)
-        cnts = get_best_scoring_cnt(cnts, food_prob)
+        cnts = get_best_scoring_cnt(cnts, food_prob, _is_debug=_is_debug)
     else:
         return np.zeros([]), food_prob, 0.
 
@@ -479,15 +474,7 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
 
 
 
-
-
-
-
-
-
-
-
-
+# %%
 
 
 if __name__ == '__main__':
@@ -579,7 +566,7 @@ if __name__ == '__main__':
 
 
         out_name = out_dir / mask_file.with_suffix('.png').name
-        if not out_name.exists():
+        if (food_IoU < 1) and (not out_name.exists()):
             fig = plt.figure()
             plt.imshow(img, cmap='gray')
             plt.plot(circx, circy)
