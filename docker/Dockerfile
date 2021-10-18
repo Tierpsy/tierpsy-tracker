@@ -55,11 +55,11 @@ RUN echo "alias is_tierpsy_running=${CODE_PATH}/docker/is_tierpsy_running.sh" \
     >> ~/.bashrc
 RUN echo "clear" >> ${DOCKER_HOME}/.bashrc
 RUN echo "cat ${CODE_PATH}/docker/tierpsy_splash.txt" >> ${DOCKER_HOME}/.bashrc
+RUN echo "tierpsy_gui &" >> ${DOCKER_HOME}/.bashrc
 
 # make it so that tierpsy opens in the /DATA folder
 # hopefully this works with github actions
 WORKDIR /DATA
 
 # launch app
-SHELL ["/bin/bash", "-c"]
-CMD ["tierpsy_gui"]
+CMD ["bash"]
