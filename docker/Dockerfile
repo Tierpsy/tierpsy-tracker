@@ -44,6 +44,10 @@ RUN ls -lah ${CODE_PATH}/*
 RUN pip3 install -r ${CODE_PATH}/docker/docker_requirements.txt
 RUN pip3 install -e ${CODE_PATH}
 
+# get food contour model
+RUN wget https://zenodo.org/record/5575338/files/unet_RMSprop-5-04999-0.3997.h5 \
+    -P ${CODE_PATH}/tierpsy/extras/
+
 # edit .bashrc:
 # python => python3, script to check if tierpsy is running, splash screen
 RUN echo "alias python=python3" >> ${DOCKER_HOME}/.bashrc
