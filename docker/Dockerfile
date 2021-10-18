@@ -61,4 +61,5 @@ RUN echo "cat ${CODE_PATH}/docker/tierpsy_splash.txt" >> ${DOCKER_HOME}/.bashrc
 WORKDIR /DATA
 
 # launch app
-CMD ["bash"]
+SHELL ["/bin/bash", "-c"]
+CMD ["tierpsy_gui"]
