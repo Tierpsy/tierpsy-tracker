@@ -196,83 +196,6 @@ def get_food_prob(mask_file, model, max_bgnd_images = 2, _is_debug = False, resi
     return Y_pred, original_size, bgnd_s
 
 
-def get_food_contour_nn(mask_file, model, _is_debug=False):
-    '''
-    Get the food contour using a pretrained u-net model.
-    This function is faster if a preloaded model is given since it is very slow
-    to load the model and tensorflow.
-    '''
-
-    food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
-    #bgnd_images are only used in debug mode
-    #%%
-    patch_m = (food_prob>0.5).astype(np.uint8)
-
-    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
-
-
-    #pick the largest contour
-
-    if not cnts:
-        return np.zeros([]), food_prob, 0.
-
-
-    cnt_areas = [cv2.contourArea(x) for x in cnts]
-    ind = np.argmax(cnt_areas)
-    patch_m = np.zeros(patch_m.shape, np.uint8)
-    patch_m = cv2.drawContours(patch_m, cnts , ind, color=1, thickness=cv2.FILLED)
-    patch_m = cv2.morphologyEx(patch_m, cv2.MORPH_CLOSE, disk(3), iterations=5)
-
-
-    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
-
-
-    if len(cnts) == 1:
-        cnts = cnts[0]
-    elif len(cnts) > 1:
-        #too many contours select the largest
-        cnts = max(cnts, key=cv2.contourArea)
-    else:
-        return np.zeros([]), food_prob, 0.
-
-
-    hull = cv2.convexHull(cnts)
-    hull_area = cv2.contourArea(hull)
-    cnt_solidity = cv2.contourArea(cnts)/hull_area
-
-    food_cnt = np.squeeze(cnts).astype(np.float)
-    # rescale contour to be the same dimension as the original images
-    food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
-    food_cnt[:,1] *= original_size[1]/food_prob.shape[1]
-    #%%
-    if _is_debug:
-        import matplotlib.pylab as plt
-        img = bgnd_images[0]
-
-
-        #np.squeeze(food_cnt)
-        patch_n = np.zeros(img.shape, np.uint8)
-        patch_n = cv2.drawContours(patch_n, [cnts], 0, color=1, thickness=cv2.FILLED)
-        top = img.max()
-        bot = img.min()
-        img_n = (img-bot)/(top-bot)
-        img_rgb = np.repeat(img_n[..., None], 3, axis=2)
-        #img_rgb = img_rgb.astype(np.uint8)
-        img_rgb[...,0] = ((patch_n==0)*0.5 + 0.5)*img_rgb[...,0]
-
-        plt.figure()
-        plt.imshow(img_rgb)
-
-        plt.plot(hull[:,:,0], hull[:,:,1], 'r')
-        plt.title('solidity = {:.3}'.format(cnt_solidity))
-      #%%
-    return food_cnt, food_prob, cnt_solidity
-
-
-
-
-
-
 def cnt_solidity_func(_cnt):
     _hull = cv2.convexHull(_cnt)
     return cv2.contourArea(_cnt) / cv2.contourArea(_hull)
@@ -282,6 +205,7 @@ def avg_incnt_func(_cnt, img):
     mask = np.zeros(img.shape, np.uint8)
     mask = cv2.drawContours(mask, _cnt, 1, color=255).astype(np.uint8)
     return cv2.mean(img, mask)[0]
+
 
 def eccentricity_func(_cnt):
     moments = cv2.moments(_cnt)
@@ -353,17 +277,18 @@ def get_best_scoring_cnt(cnts, food_proba, _is_debug=False):
     return cnt_out
 
 
-def new_get_food_contour_nn(mask_file, model, _is_debug=False):
+def get_food_contour_nn(mask_file, model, _is_debug=False):
     '''
     Get the food contour using a pretrained u-net model.
     This function is faster if a preloaded model is given since it is very slow
     to load the model and tensorflow.
     '''
 
-    food_prob, original_size, bgnd_images = get_food_prob(mask_file, model, _is_debug=_is_debug)
-    #bgnd_images are only used in debug mode
+    food_prob, original_size, bgnd_images = get_food_prob(
+        mask_file, model, _is_debug=_is_debug)
+    # bgnd_images are only used in debug mode
 
-    patch_m = (food_prob>0.5).astype(np.uint8)
+    patch_m = (food_prob > 0.5).astype(np.uint8)
 
     if _is_debug:
         import matplotlib.pylab as plt
@@ -371,8 +296,8 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
         plt.imshow(patch_m)
         plt.show()
 
-
-    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
+    cnts, _ = cv2.findContours(
+        patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
 
     # filter contours first to only keep the ones with a defined hull area
     cnts = [
@@ -408,12 +333,15 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
         fig.gca().set_title('first patch_m')
         plt.show()
 
-    # for some reason this detects the edge and finds the outer rim of said edge
+    # this detects the edge and finds the outer rim of said edge
     # probably to make sure we hit the actual edge
     # rather than being a little inside the food patch
-    patch_m = np.zeros(patch_m.shape, np.uint8)
-    patch_m = cv2.drawContours(patch_m, cnts, -1, color=1, thickness=cv2.FILLED)
-    patch_m = cv2.morphologyEx(patch_m, cv2.MORPH_CLOSE, disk(3), iterations=5)
+    patch_m = np.zeros(
+        patch_m.shape, np.uint8)
+    patch_m = cv2.drawContours(
+        patch_m, cnts, -1, color=1, thickness=cv2.FILLED)
+    patch_m = cv2.morphologyEx(
+        patch_m, cv2.MORPH_CLOSE, disk(3), iterations=5)
 
     if _is_debug:
         import matplotlib.pyplot as plt
@@ -422,8 +350,8 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
         fig.gca().set_title('second pathc_m')
         plt.show()
 
-
-    cnts, _ = cv2.findContours(patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
+    cnts, _ = cv2.findContours(
+        patch_m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[-2:]
 
     # print(len(cnts))
     # print(cnts[0])
@@ -431,11 +359,10 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
     if len(cnts) == 1:
         cnts = cnts[0]
     elif len(cnts) > 1:
-        #too many contours select the largest
+        # too many contours, select the largest
         cnts = max(cnts, key=cv2.contourArea)
     else:
         return np.zeros([]), food_prob, 0.
-
 
     hull = cv2.convexHull(cnts)
     hull_area = cv2.contourArea(hull)
@@ -443,39 +370,34 @@ def new_get_food_contour_nn(mask_file, model, _is_debug=False):
 
     food_cnt = np.squeeze(cnts).astype(np.float)
     # rescale contour to be the same dimension as the original images
-    food_cnt[:,0] *= original_size[0]/food_prob.shape[0]
-    food_cnt[:,1] *= original_size[1]/food_prob.shape[1]
+    food_cnt[:, 0] *= original_size[0]/food_prob.shape[0]
+    food_cnt[:, 1] *= original_size[1]/food_prob.shape[1]
 
     if _is_debug:
         import matplotlib.pylab as plt
         img = bgnd_images[0]
 
-
-        #np.squeeze(food_cnt)
+        # np.squeeze(food_cnt)
         patch_n = np.zeros(img.shape, np.uint8)
-        patch_n = cv2.drawContours(patch_n, [cnts], 0, color=1, thickness=cv2.FILLED)
+        patch_n = cv2.drawContours(
+            patch_n, [cnts], 0, color=1, thickness=cv2.FILLED)
         top = img.max()
         bot = img.min()
         img_n = (img-bot)/(top-bot)
         img_rgb = np.repeat(img_n[..., None], 3, axis=2)
-        #img_rgb = img_rgb.astype(np.uint8)
-        img_rgb[...,0] = ((patch_n==0)*0.5 + 0.5)*img_rgb[...,0]
+        # img_rgb = img_rgb.astype(np.uint8)
+        img_rgb[..., 0] = ((patch_n == 0)*0.5 + 0.5)*img_rgb[..., 0]
 
         plt.figure()
         plt.imshow(img_rgb)
 
-        plt.plot(hull[:,:,0], hull[:,:,1], 'r')
+        plt.plot(hull[:, :, 0], hull[:, :, 1], 'r')
         plt.title('solidity = {:.3}'.format(cnt_solidity))
-      #%%
+
     return food_cnt, food_prob, cnt_solidity
 
 
-
-
-
-
 # %%
-
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
@@ -501,7 +423,6 @@ if __name__ == '__main__':
     skel_files = [
         f.replace('/Volumes/behavgenom$', str(bg_path)) for f in skel_files]
 
-
     out_dir = bg_path / 'Luigi/food_tests/'
     out_log = out_dir / 'memlog.txt'
     out_data = out_dir / 'IoUs.csv'
@@ -509,12 +430,12 @@ if __name__ == '__main__':
     # load model now to prevent memory leak
     food_model = load_model(DFLT_MODEL_FOOD_CONTOUR)
 
-
+    # loop through all skeletons
     for skel_file in tqdm(skel_files):
 
         mask_file = Path(
             str(skel_file)
-            .replace('Results','MaskedVideos')
+            .replace('Results', 'MaskedVideos')
             .replace('_skeletons.hdf5', '.hdf5')
             )
         if not mask_file.exists():
@@ -523,21 +444,13 @@ if __name__ == '__main__':
         with tables.File(skel_file, 'r') as fid:
             if '/food_cnt_coord' in fid:
                 old_food_cnt = fid.get_node('/food_cnt_coord')[:].copy()
-                is_from_file = True
+                old_circx, old_circy = old_food_cnt.T
             else:
-                old_food_cnt, old_food_prob,old_cnt_solidity = (
-                    get_food_contour_nn(
-                        mask_file, food_model, _is_debug=False)
-                    )
-                is_from_file = False
+                continue
 
-        old_circx, old_circy = old_food_cnt.T
-
-        food_cnt, food_prob,cnt_solidity = new_get_food_contour_nn(
+        food_cnt, food_prob, cnt_solidity = get_food_contour_nn(
             mask_file, food_model, _is_debug=False)
         circx, circy = food_cnt.T
-
-
 
         try:
             with tables.File(mask_file, 'r') as fid:
@@ -546,13 +459,12 @@ if __name__ == '__main__':
             print(f'cant get full_data from {mask_file}')
             continue
 
-
         food_mask = cv2.drawContours(
-            np.zeros(img.shape, np.uint8), [food_cnt.astype(int)] , -1,
+            np.zeros(img.shape, np.uint8), [food_cnt.astype(int)], -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
         old_food_mask = cv2.drawContours(
-            np.zeros(img.shape, np.uint8), [old_food_cnt.astype(int)] , -1,
+            np.zeros(img.shape, np.uint8), [old_food_cnt.astype(int)], -1,
             color=1, thickness=cv2.FILLED
             ).astype(bool)
 
@@ -564,17 +476,12 @@ if __name__ == '__main__':
         with open(out_data, 'a') as fid:
             print(f'{mask_file},{food_IoU}', file=fid)
 
-
         out_name = out_dir / mask_file.with_suffix('.png').name
         if (food_IoU < 1) and (not out_name.exists()):
             fig = plt.figure()
             plt.imshow(img, cmap='gray')
             plt.plot(circx, circy)
-            if is_from_file:
-                color = 'g'
-            else:
-                color = 'r'
-            plt.plot(old_circx, old_circy, color, linestyle='--')
+            plt.plot(old_circx, old_circy, 'g', linestyle='--')
             plt.show()
             plt.pause(0.2)
 
@@ -590,5 +497,3 @@ if __name__ == '__main__':
                 print(
                     f'free: {free_m}, used:{used_m}, file:{skel_file}',
                     file=fout)
-
-

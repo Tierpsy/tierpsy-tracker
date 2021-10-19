@@ -28,7 +28,8 @@ def calculate_food_cnt(mask_file, use_nn_food_cnt, model_path, _is_debug=False, 
             return
 
         food_model = load_model(model_path)
-        food_cnt, food_prob,cnt_solidity = get_food_contour_nn(mask_file, food_model, _is_debug=_is_debug)
+        food_cnt, food_prob, cnt_solidity = get_food_contour_nn(
+            mask_file, food_model, _is_debug=_is_debug)
         if cnt_solidity < solidity_th:
             food_cnt = np.zeros(0)
 
