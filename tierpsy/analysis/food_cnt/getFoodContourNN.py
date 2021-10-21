@@ -15,7 +15,6 @@ import os
 import numpy as np
 import cv2
 import warnings
-from scipy.stats import rankdata, zscore
 with warnings.catch_warnings():
     warnings.simplefilter(action='ignore', category=FutureWarning)
     from keras.models import load_model
@@ -217,21 +216,6 @@ def eccentricity_func(_cnt):
     major_axis = a1+a2
     eccentricity = np.sqrt(1-minor_axis/major_axis)
     return eccentricity
-
-
-def rank_data(an_array, lower_is_better=True):
-    """return 0 for the best value.
-    best value is the maximum one, if lower_is_better == False,
-    otherwise it is the minimum.
-    e.g rank_data([0, 2, 1, 3], lower_is_better=False) returns [3, 1, 2, 0]
-    """
-    ranks = rankdata(an_array, method='min')
-    # default behaviour for scipy's rankdata is that lowest value => lowest rank
-    if lower_is_better:
-        ranks = ranks - 1  # -1 bc scipy's rank starts from 1
-    else:
-        ranks = len(an_array) - ranks
-    return ranks
 
 
 def get_best_scoring_cnt(cnts, food_proba, _is_debug=False):
