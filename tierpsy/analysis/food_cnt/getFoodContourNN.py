@@ -21,9 +21,7 @@ with warnings.catch_warnings():
 
 from skimage.morphology import disk
 
-from tierpsy import AUX_FILES_DIR
-
-DFLT_RESIZING_SIZE = 512 #the network was trained with images of this size 512
+DFLT_RESIZING_SIZE = 512  # the network was trained with images of this size 512
 
 
 
