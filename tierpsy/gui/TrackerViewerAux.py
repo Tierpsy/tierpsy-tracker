@@ -117,7 +117,7 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
 
     def getSkelFile(self):
         selected_file, _ = QFileDialog.getOpenFileName(
-            self, 'Select file with the worm skeletons', self.results_dir, "Skeletons files (*_skeletons.hdf5);; All files (*)")
+            self, 'Select file with the worm skeletons and/or features', self.results_dir, "Results files (*_featuresN.hdf5 *features.hdf5 *_skeletons.hdf5);; All files (*)")
 
         if not os.path.exists(selected_file):
             return
