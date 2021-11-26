@@ -3,13 +3,15 @@
 """
 @author: avelinojaver
 """
-from functools import partial
 import os
 import glob
 import datetime
 import tables
 import pandas as pd
 import numpy as np
+
+from functools import partial
+from multiprocessing import Pool, cpu_count
 
 from tierpsy.helper.misc import TimeCounter, print_flush
 from tierpsy.summary.process_ow import ow_plate_summary, \
@@ -122,7 +124,7 @@ def calculate_summaries(
         abbreviate_features, dorsal_side_known,
         time_windows='0:end', time_units=None,
         select_feat='all', keywords_include='', keywords_exclude='',
-        _is_debug = False, append_to_file=None, **kwargs
+        _is_debug=False, is_parallel=False, **kwargs
         ):
     """
     Gets input from the GUI, calls the function that chooses the type of
@@ -166,7 +168,7 @@ def calculate_summaries(
     fnames = glob.glob(os.path.join(root_dir, '**', '*' + ext), recursive=True)
     if not fnames:
         print_flush('No valid files found. Nothing to do here.')
-        return None,None
+        return None, None
 
     # EM :Make df_files dataframe with filenames and file ids
     df_files = make_df_filenames(fnames)
@@ -179,7 +181,7 @@ def calculate_summaries(
         # EM : Create features_summaries and filenames_summaries files
         if select_feat != 'all':
             win_save_base_name = save_base_name.replace(
-                'tierpsy',select_feat+'_tierpsy')
+                'tierpsy', select_feat+'_tierpsy')
         else:
             win_save_base_name = save_base_name
 
@@ -197,16 +199,17 @@ def calculate_summaries(
             fold_args, df_files.columns.to_list())
         featsum_headers = get_featsum_headers(f1)
 
-        with open(f1,'w') as fid:
+        with open(f1, 'w') as fid:
             fid.write(fnamesum_headers)
 
-        with open(f2,'w') as fid:
+        with open(f2, 'w') as fid:
             fid.write(featsum_headers)
 
         fnames_files.append(f1)
         featsum_files.append(f2)
 
     progress_timer = TimeCounter('')
+
     def _displayProgress(n):
         args = (n + 1, len(df_files), progress_timer.get_time_str())
         dd = "Extracting features summary. "
@@ -216,86 +219,163 @@ def calculate_summaries(
     _displayProgress(-1)
 
     # EM : Extract feature summaries from all the files for all time windows.
-    is_featnames_written = [False for i in range(len(time_windows_ints))]
 
-    for ifile,row in df_files.iterrows():
-        fname = row['filename']
-        file_id = row['file_id']
+    # make a partial function that only needs the one input
+    _partial_calculate_summaries_one_video = partial(
+        _calculate_summaries_one_video,
+        summary_func=summary_func,
+        fnames_files=fnames_files,
+        featsum_files=featsum_files,
+        abbreviate_features=abbreviate_features,
+        selected_feat=selected_feat,
+        )
 
-        summaries_per_win = summary_func(fname)
+    if not is_parallel:
+        # just do one at a time
+        for ifile, row in df_files.iterrows():
+            _partial_calculate_summaries_one_video(row)
+            _displayProgress(ifile)
+    else:
+        n_procs = int(cpu_count() * 0.9)
+        # iterrows returning a line counter breaks the partial/parallel, so
+        # create silly generator that just discards the counter
+        row_looper = (row for _, row in df_files.iterrows())
+        with Pool(n_procs) as p:
+            outs = p.imap_unordered(
+                _partial_calculate_summaries_one_video, row_looper)
 
-        for iwin,df in enumerate(summaries_per_win):
-
-            f1 = fnames_files[iwin]
-            f2 = featsum_files[iwin]
-
-            try:
-                df.insert(0, 'file_id', file_id)
-                df = sort_columns(df, selected_feat)
-            except (AttributeError, IOError, KeyError,
-                    tables.exceptions.HDF5ExtError,
-                    tables.exceptions.NoSuchNodeError):
-                continue
-            else:
-                # Get the filename summary line
-                filenames = row.copy()
-                if not df.empty:
-                    filenames['is_good'] = True
-                # Store the filename summary line
-                with open(f1,'a') as fid:
-                    fid.write(','.join([str(x)
-                                        for x in filenames.values])+"\n")
-
-                if not df.empty:
-                    # Abbreviate names
-                    if abbreviate_features:
-                        df = shorten_feature_names(df)
-
-                    # Store line(s) of features summaries for the given file
-                    # and given window
-                    with open(f2,'a') as fid:
-                        if not is_featnames_written[iwin]:
-                            df.to_csv(fid, header=True, index=False)
-                            is_featnames_written[iwin] = True
-                        else:
-                            df.to_csv(fid, header=False, index=False)
-
-
-        _displayProgress(ifile)
+            # loop throug outs consumes the iterator and does the maths
+            ifile = 0
+            for _ in outs:
+                _displayProgress(ifile)
+                ifile += 1
 
     out = '****************************'
     out += '\nFINISHED. Created Files:'
-    for f1,f2 in zip(fnames_files,featsum_files):
-        out += '\n-> {}\n-> {}'.format(f1,f2)
+    for f1, f2 in zip(fnames_files, featsum_files):
+        out += '\n-> {}\n-> {}'.format(f1, f2)
 
     print_flush(out)
 
-
     return df_files
+
+
+def _calculate_summaries_one_video(
+        row, summary_func, fnames_files, featsum_files,
+        abbreviate_features=False, selected_feat='all'):
+
+    # name of the results file to process, and its incremental id
+    fname = row['filename']
+    file_id = row['file_id']
+
+    # summary_func is a partial function with all parameters already passed
+    # this is the bit that actually does the calculations
+    summaries_per_win = summary_func(fname)
+
+    # loop on windows to write to output
+    for iwin, df in enumerate(summaries_per_win):
+        # get the name of filenames_summary and features_summary for this window
+        f1 = fnames_files[iwin]
+        f2 = featsum_files[iwin]
+        print(f1, f2)
+
+        try:
+            # add the file_id column, and sort the columns.
+            # a few important columns first, then all the features
+            # Important otherwise if some files have all nan in a feature
+            # that other files had values for, it misaligns the feat matrix
+            df.insert(0, 'file_id', file_id)
+            df = sort_columns(df, selected_feat)
+        except (
+                AttributeError, IOError, KeyError,
+                tables.exceptions.HDF5ExtError,
+                tables.exceptions.NoSuchNodeError):
+            continue
+        else:
+            # if nothing fails, write to the correct file
+            # Get the filename summary line
+            filenames = row.copy()
+            if not df.empty:
+                filenames['is_good'] = True
+            # Store the filename summary line
+            with open(f1, 'a') as fid:
+                fid.write(','.join([str(x) for x in filenames.values])+"\n")
+
+            # if no features were calculated, move on to next iteration
+            if df.empty:
+                continue
+
+            # Abbreviate names
+            if abbreviate_features:
+                df = shorten_feature_names(df)
+
+            # Store line(s) of features summaries for the given file
+            # and given window
+            # if we haven't written any data in a file, i.e. it only contains
+            # comments or it is empty, we need to write the features names too
+            is_write_header = _has_only_comments(f2)
+            with open(f2, 'a') as fid:
+                df.to_csv(fid, header=is_write_header, index=False)
+
+
+def _has_only_comments(filepath, comment_character='#'):
+    """
+    _has_only_comments Read a file line by line, return False as soon as
+    a line does not begin with comment_character.
+    Return True if it loops to the end and all lines
+    begin with comment_character.
+    Return True on an empty file
+
+
+    Parameters
+    ----------
+    filepath : [type]
+        [description]
+    comment_character: [str]
+        character that identifies a comment
+    """
+    with open(filepath, 'r') as fid:
+        for line in fid:
+            if not line.startswith(comment_character):
+                return False
+    # got here without finding a non-comment line:
+    return True
+
 
 if __name__ == '__main__':
 
+    import re
+    import time
+    from pathlib import Path
+    from pandas.testing import assert_frame_equal
+
+    # root_dir = \
+    #     # '/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/Syngenta/Results'
+    #     # '/Users/em812/Data/Tierpsy_GUI/test_results_2'
+    #     #'/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/20190808_subset'
+    # is_manual_index = False
+    # feature_type = 'tierpsy'
+    # # feature_type = 'openworm'
+    # # summary_type = 'plate_augmented'
+    # summary_type = 'plate'
+    # #summary_type = 'trajectory'
+
+    # Luigi
     root_dir = \
-        '/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/Syngenta/Results'
-        # '/Users/em812/Data/Tierpsy_GUI/test_results_2'
-        #'/Users/em812/Data/Tierpsy_GUI/test_results_multiwell/20190808_subset'
+       '/Users/lferiani/Hackathon/multiwell_tierpsy/summaries/Results'
+
+    # delete existing csvs
+    for fname in Path(root_dir).rglob('*csv'):
+        if fname.name.startswith('feat') or fname.name.startswith('filenames'):
+            if 'groundtruth' not in fname.name:
+                fname.unlink()
 
     is_manual_index = False
     feature_type = 'tierpsy'
     # feature_type = 'openworm'
     # summary_type = 'plate_augmented'
     summary_type = 'plate'
-    #summary_type = 'trajectory'
-
-# Luigi
-#    root_dir = \
-#        '/Users/lferiani/Desktop/Data_FOVsplitter/evgeny/Results/20190808_subset'
-#    is_manual_index = False
-#    feature_type = 'tierpsy'
-#    #feature_type = 'openworm'
-#    #summary_type = 'plate_augmented'
-##    summary_type = 'plate'
-#    summary_type = 'trajectory'
+    # summary_type = 'trajectory'
 
     # fold_args = dict(
     #              n_folds = 2,
@@ -303,34 +383,63 @@ if __name__ == '__main__':
     #              time_sample_seconds = 10*60
     #              )
     kwargs = {
-        'filter_time_min': '100',
-        'filter_travel_min': '1400',
+        'filter_time_min': '25',
+        'filter_travel_min': '124',
         'filter_time_units': 'frame_numbers',
-        'filter_distance_units': 'pixels',
-        'filter_length_min': '50',
-        'filter_length_max': '200',
-        'filter_width_min': '2',
-        'filter_width_max': '15'
+        'filter_distance_units': 'microns',
+        'filter_length_min': '200',
+        'filter_length_max': '2000',
+        'filter_width_min': '20',
+        'filter_width_max': '500'
         }
 
     time_windows = '0:100+200:300+350:400, 150:200' #'0:end:1000' #'0:end' #
     time_units = 'seconds'
-    select_feat = 'tierpsy_16' #'tierpsy_2k'
+    select_feat = 'tierpsy_256' #'tierpsy_2k'
     keywords_include = ''
-    keywords_exclude = 'blob' #'curvature,velocity,norm,abs'
+    keywords_exclude = '' #'blob' #'curvature,velocity,norm,abs'
     abbreviate_features = False
     dorsal_side_known = False
 
+    tic = time.time()
     df_files = calculate_summaries(
         root_dir, feature_type, summary_type, is_manual_index,
         abbreviate_features, dorsal_side_known,
         time_windows=time_windows, time_units=time_units,
         select_feat=select_feat, keywords_include=keywords_include,
         keywords_exclude=keywords_exclude,
-        _is_debug = False, **kwargs)
-        #**fold_args)
+        _is_debug=False, is_parallel=True, **kwargs)
+        # **fold_args)
+
+    print(f'Time elapsed: {time.time() - tic}s')
 
     # Luigi
 #    df_files, all_summaries = calculate_summaries(
 #         root_dir, feature_type, summary_type, is_manual_index,
 #         time_windows, time_units, **fold_args)
+
+    # check results are same as ground truth:
+    other_csvs = []
+    truth_csvs = []
+    for csv in Path(root_dir).rglob('*.csv'):
+        if csv.name.startswith('feat') or csv.name.startswith('filenames'):
+            if 'groundtruth' in csv.name:
+                continue
+            dt_str = re.findall(r'\d{8}_\d{6}', csv.name)[0]
+            other_csvs.append(csv)
+            truth_csvs.append(
+                csv.parent / csv.name.replace(dt_str, 'groundtruth')
+            )
+
+    def _read(fname):
+        df = pd.read_csv(fname, comment='#', index_col=None)
+        sorting_by = ['file_id', 'well_name', 'worm_index', 'i_fold']
+        sorting_by = [c for c in sorting_by if c in df]
+        df = df.sort_values(by=sorting_by).reset_index(drop=True)
+        return df
+
+    for truth_fname, candidate_fname in zip(truth_csvs, other_csvs):
+        truth_df = _read(truth_fname)
+        cand_df = _read(candidate_fname)
+        assert_frame_equal(truth_df, cand_df, check_like=True)
+    print('all good')
