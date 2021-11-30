@@ -3,6 +3,7 @@
 """
 @author: avelinojaver
 """
+# %%
 import os
 import glob
 import datetime
@@ -55,7 +56,7 @@ def check_n_parallel(n_par):
         Actual number of parallel processes that can be achieved on the system
     """
     try:
-        max_n_procs = os.sched_getaffinity(0)
+        max_n_procs = len(os.sched_getaffinity(0))
     except:
         from multiprocessing import cpu_count
         max_n_procs = cpu_count()
@@ -400,8 +401,8 @@ if __name__ == '__main__':
     feature_type = 'tierpsy'
     # feature_type = 'openworm'
     # summary_type = 'plate_augmented'
-    summary_type = 'plate'
-    # summary_type = 'trajectory'
+    # summary_type = 'plate'
+    summary_type = 'trajectory'
 
     # fold_args = dict(
     #              n_folds = 2,
@@ -419,9 +420,9 @@ if __name__ == '__main__':
         'filter_width_max': '500'
         }
 
-    time_windows = '0:100+200:300+350:400, 150:200' #'0:end:1000' #'0:end' #
+    time_windows = '0:end' #'0:100+200:300+350:400, 150:200' #'0:end:1000' #
     time_units = 'seconds'
-    select_feat = 'tierpsy_256' #'tierpsy_2k'
+    select_feat = 'all' #'tierpsy_2k'
     keywords_include = ''
     keywords_exclude = '' #'blob' #'curvature,velocity,norm,abs'
     abbreviate_features = False
@@ -434,11 +435,11 @@ if __name__ == '__main__':
         time_windows=time_windows, time_units=time_units,
         select_feat=select_feat, keywords_include=keywords_include,
         keywords_exclude=keywords_exclude,
-        _is_debug=False, n_parallel=10, **kwargs)
+        _is_debug=False, n_parallel=8, **kwargs)
         # **fold_args)
 
     print(f'Time elapsed: {time.time() - tic}s')
-
+# %%
     # Luigi
 #    df_files, all_summaries = calculate_summaries(
 #         root_dir, feature_type, summary_type, is_manual_index,

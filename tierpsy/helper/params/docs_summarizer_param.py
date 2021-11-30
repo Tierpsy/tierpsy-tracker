@@ -6,7 +6,7 @@ from .helper import repack_dflt_list
 
 try:
     from os import sched_getaffinity
-    _max_n_processes = max(1, sched_getaffinity(0)-1)
+    _max_n_processes = max(1, len(sched_getaffinity(0))-1)
 except (AttributeError, ImportError):
     from multiprocessing import cpu_count
     _max_n_processes = max(1, cpu_count()-1)
