@@ -39,6 +39,30 @@ def check_in_list(x, list_of_x, x_name):
             '{} invalid {}. Valid options {}.'.format(x, x_name, list_of_x)
             )
 
+def check_n_parallel(n_par):
+    """
+    check_n_parallel clips the value of n_par between 1 and the
+    number of available cores -1
+
+    Parameters
+    ----------
+    n_par : int
+        desired number of parallel processes
+
+    Returns
+    -------
+    int
+        Actual number of parallel processes that can be achieved on the system
+    """
+    try:
+        max_n_procs = os.sched_getaffinity(0)
+    except:
+        from multiprocessing import cpu_count
+        max_n_procs = cpu_count()
+    n_par = min(n_par, max_n_procs-1)
+    n_par = max(1, n_par)
+    return n_par
+
 def get_summary_func(
         feature_type, summary_type,
         time_windows_ints, time_units,
@@ -124,7 +148,7 @@ def calculate_summaries(
         abbreviate_features, dorsal_side_known,
         time_windows='0:end', time_units=None,
         select_feat='all', keywords_include='', keywords_exclude='',
-        _is_debug=False, is_parallel=False, **kwargs
+        _is_debug=False, n_parallel=-1, **kwargs
         ):
     """
     Gets input from the GUI, calls the function that chooses the type of
@@ -136,6 +160,8 @@ def calculate_summaries(
     #check the options are valid
     check_in_list(feature_type, valid_feature_types, 'feature_type')
     check_in_list(summary_type, valid_summary_types, 'summary_type')
+    n_parallel = check_n_parallel(n_parallel)
+
 
     # EM : convert time windows to list of integers in frame number units
     time_windows_ints = time_windows_parser(time_windows)
@@ -230,17 +256,17 @@ def calculate_summaries(
         selected_feat=selected_feat,
         )
 
-    if not is_parallel:
-        # just do one at a time
+    if n_parallel < 2:
+        # just do one at a time, no Pool call to avoid overhead
         for ifile, row in df_files.iterrows():
             _partial_calculate_summaries_one_video(row)
             _displayProgress(ifile)
     else:
-        n_procs = int(cpu_count() * 0.9)
+
         # iterrows returning a line counter breaks the partial/parallel, so
         # create silly generator that just discards the counter
         row_looper = (row for _, row in df_files.iterrows())
-        with Pool(n_procs) as p:
+        with Pool(n_parallel) as p:
             outs = p.imap_unordered(
                 _partial_calculate_summaries_one_video, row_looper)
 
@@ -408,7 +434,7 @@ if __name__ == '__main__':
         time_windows=time_windows, time_units=time_units,
         select_feat=select_feat, keywords_include=keywords_include,
         keywords_exclude=keywords_exclude,
-        _is_debug=False, is_parallel=True, **kwargs)
+        _is_debug=False, n_parallel=10, **kwargs)
         # **fold_args)
 
     print(f'Time elapsed: {time.time() - tic}s')
