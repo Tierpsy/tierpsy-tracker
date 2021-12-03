@@ -175,8 +175,11 @@ N.B. the command above will not mount any network shares - look inside the launc
 Download the installer from [Xquartz's website](https://www.xquartz.org/).
 Then open it, and follow the installation wizard.
 
-![pkg](https://user-images.githubusercontent.com/33106690/129926425-ca071a47-9888-4e10-8d32-50947cbf72fe.png)|![xq1](https://user-images.githubusercontent.com/33106690/129926468-f149b8c6-340e-4661-b0e3-44dfec125635.png)|![xq2](https://user-images.githubusercontent.com/33106690/129926697-9cfc4ad5-dac5-4e25-a860-da147c8c7411.png)|![xq3](https://user-images.githubusercontent.com/33106690/129926755-21a526e6-c478-4bea-99af-836852cba34f.png)
-:---:|:---:|:---:|:---:
+Once the installation is finished, open XQuartz, go to Preferences -> Security, and tick "Allow connections from network clients". 
+Then quit XQuartz and open it again, or the change will not be applied.
+
+![pkg](https://user-images.githubusercontent.com/33106690/129926425-ca071a47-9888-4e10-8d32-50947cbf72fe.png)|![xq1](https://user-images.githubusercontent.com/33106690/129926468-f149b8c6-340e-4661-b0e3-44dfec125635.png)|![xq2](https://user-images.githubusercontent.com/33106690/129926697-9cfc4ad5-dac5-4e25-a860-da147c8c7411.png)|![xq3](https://user-images.githubusercontent.com/33106690/129926755-21a526e6-c478-4bea-99af-836852cba34f.png)|![xq4](https://user-images.githubusercontent.com/33106690/137301854-13dac386-9eb6-402b-a82e-58608626d063.png)
+:---:|:---:|:---:|:---:|:---:
 
 
 ### 2. Install Docker

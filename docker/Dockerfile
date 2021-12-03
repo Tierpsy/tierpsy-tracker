@@ -44,6 +44,10 @@ RUN ls -lah ${CODE_PATH}/*
 RUN pip3 install -r ${CODE_PATH}/docker/docker_requirements.txt
 RUN pip3 install -e ${CODE_PATH}
 
+# get food contour model
+RUN wget https://zenodo.org/record/5575338/files/unet_RMSprop-5-04999-0.3997.h5 \
+    -P ${CODE_PATH}/tierpsy/extras/
+
 # edit .bashrc:
 # python => python3, script to check if tierpsy is running, splash screen
 RUN echo "alias python=python3" >> ${DOCKER_HOME}/.bashrc
@@ -51,6 +55,7 @@ RUN echo "alias is_tierpsy_running=${CODE_PATH}/docker/is_tierpsy_running.sh" \
     >> ~/.bashrc
 RUN echo "clear" >> ${DOCKER_HOME}/.bashrc
 RUN echo "cat ${CODE_PATH}/docker/tierpsy_splash.txt" >> ${DOCKER_HOME}/.bashrc
+RUN echo "tierpsy_gui &" >> ${DOCKER_HOME}/.bashrc
 
 # make it so that tierpsy opens in the /DATA folder
 # hopefully this works with github actions
