@@ -42,10 +42,13 @@ dflt_args_list = [
         '''
         ),
     ('n_parallel',
-        _max_n_processes,
+        1,
         '''
         Number of files to be processed in parallel. Not limited in the GUI,
-        but in reality limited by the resources available.
+        but in reality limited by the resources available. Capped to one less
+        than the number of cores available, unless running on PBS or SLURM HPC,
+        in which case no upper cap is set as python does not know the number of
+        cores allocated to it
         '''
         ),
     ('is_manual_index',

@@ -17,6 +17,7 @@ except Exception:
 
 1.5.3alpha
 - Docker workflow for easy image building
+- Summaries can be parallelised
 - Bug fixes:
   * getFoodContourMorph: fixed bug in catching the output of cv2.findContours
 

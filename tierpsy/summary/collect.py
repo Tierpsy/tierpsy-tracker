@@ -34,16 +34,20 @@ valid_summary_types = ['plate', 'trajectory', 'plate_augmented']
 feat_df_id_cols = \
     ['file_id', 'i_fold', 'worm_index', 'n_skeletons', 'well_name', 'is_good_well']
 
+
 def check_in_list(x, list_of_x, x_name):
     if not x in list_of_x:
         raise ValueError(
             '{} invalid {}. Valid options {}.'.format(x, x_name, list_of_x)
             )
 
+
 def check_n_parallel(n_par):
     """
     check_n_parallel clips the value of n_par between 1 and the
-    number of available cores -1
+    number of available cores - 1.
+    If tierpsy detects it's beinng run in an HPC (PBS or SLURM), no upper bound
+    is applied (we assume the user knows what they're doing)
 
     Parameters
     ----------
@@ -55,14 +59,19 @@ def check_n_parallel(n_par):
     int
         Actual number of parallel processes that can be achieved on the system
     """
+    # check if we're running in hpc
+    if any(x.startswith(('PBS_', 'SLURM_')) for x in os.environ):
+        return max(1, n_par)
+
     try:
-        max_n_procs = len(os.sched_getaffinity(0))
+        max_n_procs = len(os.sched_getaffinity(0)) - 1
     except:
         from multiprocessing import cpu_count
-        max_n_procs = cpu_count()
-    n_par = min(n_par, max_n_procs-1)
+        max_n_procs = cpu_count() - 1
+    n_par = min(n_par, max_n_procs)
     n_par = max(1, n_par)
     return n_par
+
 
 def get_summary_func(
         feature_type, summary_type,
@@ -368,7 +377,7 @@ def _has_only_comments(filepath, comment_character='#'):
     # got here without finding a non-comment line:
     return True
 
-
+# %%
 if __name__ == '__main__':
 
     import re
