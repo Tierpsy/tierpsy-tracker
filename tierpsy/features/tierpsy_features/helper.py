@@ -10,6 +10,7 @@ import numpy as np
 import numba
 import math
 import os
+from scipy.ndimage import generic_filter
 
 extras_dir = os.path.join(os.path.dirname(__file__), 'extras')
 def load_OW_eigen_projections():
@@ -108,6 +109,37 @@ def add_derivatives(feats, cols2deriv, delta_frames, fps):
     feats = pd.concat([feats, df_ts], axis=1)
     #%%
     return feats
+
+def nanmedian_filter(time_series: np.ndarray, window_size: int) -> np.ndarray:
+    """
+    Apply a moving median filter to a 1D time series, ignoring NaN values.
+    The filter is applied along the time axis only, preserving NaNs in the output.
+    
+    Parameters:
+    - time_series: np.ndarray, input 1D array with possible NaN values
+    - window_size: int, the size of the moving window (must be an odd number)
+    
+    Returns:
+    - np.ndarray, the smoothed time series with NaNs preserved
+    """
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be an odd number.")
+
+    def nanmedian(window: np.ndarray) -> float:
+        "Calculate the median of a window, ignoring NaNs."
+        valid_values = window[~np.isnan(window)]
+        if valid_values.size > 0:
+            return np.median(valid_values)
+        else:
+            return np.nan
+
+    # Apply the custom nanmedian function using generic_filter
+    smoothed = generic_filter(time_series, nanmedian, size=window_size, mode='nearest')
+    
+    # Preserve NaNs in the original time series
+    smoothed[np.isnan(time_series)] = np.nan
+
+    return smoothed
 
 class DataPartition():
     def __init__(self, partitions=None, n_segments=49):

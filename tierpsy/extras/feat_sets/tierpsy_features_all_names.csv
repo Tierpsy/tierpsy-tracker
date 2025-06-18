@@ -4546,3 +4546,7 @@ food_region_inside_frequency
 food_region_edge_duration_50th
 food_region_edge_fraction
 food_region_edge_frequency
+fraction_dwelling
+fraction_quiescence
+fraction_roaming
+fraction_sprinting
