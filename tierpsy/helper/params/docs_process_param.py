@@ -56,7 +56,7 @@ dflt_args_list = [
         ),
 
     ('pattern_include',
-        '*.hdf5',
+        '*.mp4',
         'Pattern used to search files to be analyzed.'
         ),
     ('pattern_exclude',
