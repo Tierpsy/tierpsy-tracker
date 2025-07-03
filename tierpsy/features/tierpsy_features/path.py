@@ -12,7 +12,7 @@ from scipy.interpolate import interp1d
 
 from .curvatures import curvature_grad
 from .postures import get_length
-from .helper import DataPartition, get_n_worms_estimate
+from .helper import DataPartition, get_n_worms_estimate, fill_nans_1D
 
 path_curvature_columns = ['path_curvature_body', 
                           'path_curvature_tail', 
@@ -25,6 +25,11 @@ path_curvature_columns_aux = ['coord_x_body', 'coord_y_body',
                               'coord_x_midbody', 'coord_y_midbody', 
                               'coord_x_head', 'coord_y_head'
                               ]
+
+path_straightness_columns = ['path_straightness_midbody',
+                             'path_straightness_tail',
+                             'path_straightness_body',
+                             'path_straightness_head']
 
 DFLT_ARGS = dict(
         path_step = 11,
@@ -146,7 +151,7 @@ def _h_path_curvature(skeletons,
 def get_path_curvatures(skeletons, **argkws):
     path_curvatures = []    
     path_coords = []
-    
+    path_straightness_list = []
     body_length = np.nanmedian(get_length(skeletons))
     
     for partition_str in ['body', 'tail', 'midbody', 'head']:
@@ -163,14 +168,24 @@ def get_path_curvatures(skeletons, **argkws):
         
         path_coords.append(('coord_x_' + partition_str, coords[...,0]))
         path_coords.append(('coord_y_' + partition_str, coords[...,1]))
+
+        # Calculate straightness
+        x = coords[:, 0]
+        y = coords[:, 1]
+        path_straightness_window = 125 # 5 seconds at 25 fps
+        part_straightness = straightness(x, y, path_straightness_window)
+        path_straightness_list.append(('path_straightness_' + partition_str, part_straightness))
         
+    cols, dat = zip(*path_straightness_list)
+    path_straightness_df = pd.DataFrame(np.array(dat).T, columns=cols)
+
     cols, dat = zip(*path_curvatures)
     
     path_curvatures_df = pd.DataFrame(np.array(dat).T, columns=cols)
     
     cols, dat = zip(*path_coords)
     path_coords_df = pd.DataFrame(np.array(dat).T, columns=cols)
-    return path_curvatures_df, path_coords_df
+    return path_curvatures_df, path_coords_df, path_straightness_df
 
 def _test_plot_cnts_maps(ventral_contour, dorsal_contour):
     import matplotlib.pylab as plt
@@ -225,7 +240,77 @@ def _test_plot_cnts_maps(ventral_contour, dorsal_contour):
     
         print(part)
       
+def straightness(x, y, window):
+    """
+    Compute a *windowed straightness index* for an (x, y) trajectory.
+
+    Straightness S_i for window starting at frame i is
     
+        S_i = net_displacement / path_length
+            = ||(x[i+w] – x[i], y[i+w] – y[i])|| /
+              Σ_{k=i}^{i+w-1} ||(x[k+1] – x[k], y[k+1] – y[k])||
+
+    Parameters
+    ----------
+    x, y : 1-D array-like
+        Coordinates of the trajectory to measure (same length N).
+    window : int
+        Window size in frames (w ≥ 1).  A window spans frames
+        i … i + w, inclusive, so the last valid start index is N – w – 1.
+
+    Returns
+    -------
+    S : 1-D `numpy.ndarray`, shape (N,)
+        Straightness time-series.  The final `window+1` entries are `np.nan`
+        because a full window cannot be formed there.
+
+    Notes
+    -----
+    * Uses **overlapping windows** that advance one frame at a time.
+
+    """
+    
+    #  basic checks 
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    
+    if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
+        raise ValueError("x and y must be 1-D arrays of the same length")
+    if window < 1 or not float(window).is_integer():
+        raise ValueError("window must be a positive integer")
+
+    N = x.size
+    w = int(window)
+    if N <= w:
+        # Not enough data for even one window
+        return np.full(N, np.nan)
+    #  step-wise Euclidean distances 
+    # d[k] = distance between frames k and k+1  (length N-1)
+    dx = np.diff(x)
+    dy = np.diff(y)
+    d  = np.hypot(dx, dy)
+
+    # cumulative path length so we can query any window in O(1)
+    cum_d = np.concatenate(([0.0], np.cumsum(d)))
+    
+    #  path lengths for each window
+    path_len = cum_d[w:] - cum_d[:-w]
+    
+    #  net displacements for window ends 
+    net_dx = x[w:] - x[:-w]          # length N-w
+    net_dy = y[w:] - y[:-w]
+    net_disp = np.hypot(net_dx, net_dy)
+
+    #  straightness for valid windows 
+    S_valid = net_disp / path_len          # length N-w
+
+    #  pad with NaNs to match original length 
+    S = np.empty(N)
+    S[:N-w]  = S_valid
+    S[N-w:]  = np.nan                      # last (w) frames have no window
+
+    return S
+
 #%%
 def _get_path_coverage_feats(timeseries_data, bin_size_microns):
     

@@ -141,6 +141,51 @@ def nanmedian_filter(time_series: np.ndarray, window_size: int) -> np.ndarray:
 
     return smoothed
 
+def fill_nans_1D(arr):
+    """
+    Linearly interpolate over NaN values in a 1D NumPy array.
+
+    This function identifies all NaN entries in the input array and replaces
+    each NaN with a linearly interpolated value based on the nearest non-NaN
+    neighbors. If NaNs appear at the very beginning or end of the array, they
+    are filled by carrying forward/backward the nearest non-NaN value. If the
+    entire array is NaN, the function returns a copy of the original array.
+
+    Parameters
+    ----------
+    arr : array-like, shape (N,)
+        One-dimensional array containing numeric values and possible NaNs.
+
+    Returns
+    -------
+    arr_filled : numpy.ndarray, shape (N,)
+        A new array where NaN entries have been replaced by interpolated
+        values. Non-NaN entries remain unchanged.
+
+    """
+    arr = np.asarray(arr, dtype=float)
+
+    # If there are no NaNs or all NaNs, return a copy immediately
+    if (not np.isnan(arr).any()) or (np.isnan(arr).all()):
+        return arr.copy()
+
+    # Indices of valid (non-NaN) entries
+    good_idx = np.where(~np.isnan(arr))[0]
+    # Indices of NaN entries
+    nan_idx = np.where(np.isnan(arr))[0]
+
+    # Create a copy to hold filled values
+    arr_filled = arr.copy()
+
+    # Use numpy.interp for linear interpolation over NaNs
+    arr_filled[nan_idx] = np.interp(
+        nan_idx,       # x-coordinates to fill
+        good_idx,      # x-coordinates of known (non-NaN) values
+        arr[good_idx]  # known y-values
+    )
+
+    return arr_filled
+
 class DataPartition():
     def __init__(self, partitions=None, n_segments=49):
 

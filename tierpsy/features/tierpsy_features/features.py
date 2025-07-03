@@ -17,13 +17,13 @@ get_posture_features, posture_columns, posture_aux
 
 from .curvatures import get_curvature_features, curvature_columns
 from .food import get_cnt_feats, food_columns
-from .path import get_path_curvatures, path_curvature_columns, path_curvature_columns_aux
+from .path import get_path_curvatures, path_curvature_columns, path_curvature_columns_aux, path_straightness_columns
 
 from .events import get_events, event_columns
 
 #all time series features
 timeseries_feats_no_dev_columns = velocities_columns + morphology_columns + posture_columns + \
-                curvature_columns + food_columns + path_curvature_columns
+                curvature_columns + food_columns + path_curvature_columns + path_straightness_columns
 
 #add derivative columns
 timeseries_feats_columns = timeseries_feats_no_dev_columns + ['d_' + x for x in timeseries_feats_no_dev_columns]
@@ -93,10 +93,10 @@ def get_timeseries_features(skeletons,
         features_df = features_df.join(food)
     
     
-    path_curvatures, path_coords = get_path_curvatures(skeletons)
+    path_curvatures, path_coords, path_straightness = get_path_curvatures(skeletons)
     features_df = features_df.join(path_curvatures)
     features_df = features_df.join(path_coords)
-    
+    features_df = features_df.join(path_straightness)
     
     if timestamp is None:
         timestamp = np.arange(features_df.shape[0], np.int32)
