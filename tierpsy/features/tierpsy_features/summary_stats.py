@@ -447,6 +447,19 @@ def get_summary_stats(timeseries_data,
                                           feats2norm = feats2norm,
                                           is_normalize = False)
 
+    # subdivisions by behavioural states
+    behavioural_state_subdiv_feats = ['speed_midbody', 'angular_velocity_midbody',
+                                       'curvature_midbody', 'motion_mode_backward_fraction']
+    feat_stats_m_subdiv_states = get_df_quantiles(
+        timeseries_data,
+        feats2check=behavioural_state_subdiv_feats,
+        feats2abs=[],
+        feats2norm=[],
+        subdivision_dict={'behavioural_states': behavioural_state_subdiv_feats},
+        is_abs_ventral=True
+    )
+    exp_feats.append(feat_stats_m_subdiv_states)
+    
     # EM: check if path extent features need to be calculated:
     is_extent_features = check_if_path_extent_features(selected_feat)
     if is_extent_features:
@@ -530,14 +543,10 @@ def get_summary_stats(timeseries_data,
                                               subdivision_dict = {'motion_mode':blob_cols},
                                               is_abs_ventral = False)
             exp_feats += [blob_stats, blob_stats_m_subdiv]
-            # Add fractional state features
-    frac_states = get_fractional_states(timeseries_data)
-    exp_feats.append(frac_states)
 
     exp_feats_df = pd.concat(exp_feats)
 
     assert not np.any(exp_feats_df.index.duplicated()) #If there are duplicated indexes there might be an error here
-    exp_feats_df[['fraction_quiescence', 'fraction_dwelling', 'fraction_roaming', 'fraction_sprinting']].to_csv('/Users/hkhabbaz/Documents/Research/debug_fractional_states.csv')
     return exp_feats_df
 
 

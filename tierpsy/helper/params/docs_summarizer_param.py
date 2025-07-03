@@ -18,7 +18,7 @@ summarizer_valid_options = {
     'feature_type':['openworm','tierpsy'],
     'summary_type' : ['plate', 'trajectory', 'plate_augmented'],
     'time_units' : ['frame_numbers', 'seconds'],
-    'select_feat' : ['all', 'tierpsy_level_0','tierpsy_8', 'tierpsy_16', 'tierpsy_256', 'tierpsy_2k','select_by_keywords'],
+    'select_feat' : ['all', 'tierpsy_level_0', 'tierpsy_level_1','tierpsy_8', 'tierpsy_16', 'tierpsy_256', 'tierpsy_2k','select_by_keywords'],
     'filter_time_units' : ['frame_numbers', 'seconds'],
     'filter_distance_units' : ['pixels', 'microns'],
 }
