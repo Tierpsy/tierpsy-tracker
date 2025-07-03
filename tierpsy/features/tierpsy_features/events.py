@@ -8,12 +8,13 @@
 import numpy as np
 import pandas as pd
 
-event_columns = ['motion_mode', 'food_region', 'turn']
+event_columns = ['motion_mode','behavioural_states', 'food_region', 'turn']
 durations_columns = ['event_type', 'region',
                      'duration', 'timestamp_initial',
                      'timestamp_final', 'edge_flag']
 event_region_labels = {
-            'motion_mode': {-1:'backward', 1:'forward', 0:'paused'},
+            'motion_mode': {-1:'backward', 1:'forward', 0:'paused',},
+            'behavioural_states': {0: 'quiescence', 1: 'dwelling', 2: 'roaming', 3: 'sprinting'},
             'food_region': {-1:'outside', 1:'inside', 0:'edge'},
             'turn': {1:'inter', 0:'intra'}
             }
