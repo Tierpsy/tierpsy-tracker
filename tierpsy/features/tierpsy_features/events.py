@@ -7,7 +7,7 @@
 
 import numpy as np
 import pandas as pd
-
+from tierpsy.features.tierpsy_features.helper import nanmedian_filter
 event_columns = ['motion_mode','behavioural_states', 'food_region', 'turn']
 durations_columns = ['event_type', 'region',
                      'duration', 'timestamp_initial',
@@ -161,6 +161,66 @@ def _flag_regions(vec, central_th, extrema_th, smooth_window, min_frame_range):
 
     return flag_modes
 
+def classify_worm_states(smoothed_speeds: np.ndarray, thresholds: np.ndarray = np.array([5, 30, 100])) -> np.ndarray:
+    """
+    Classify the worm's behaviour into one of four states:
+    - 0: Quiescence
+    - 1: Dwelling
+    - 2: Roaming
+    - 3: Sprinting
+
+    Parameters:
+    - smoothed_speeds: np.ndarray of shape (n_frames, 3)
+      Contains the smoothed speed data for head, midbody, and tail.
+    - thresholds: np.ndarray of length 3
+      Thresholds defining speed categories:
+        - [quiescence_max, dwelling_max, roaming_max]
+        - dwelling: 0 <= MIDBODY speed <= dwelling_max
+        - roaming: dwelling_max < MIDBODY speed <= roaming_max
+        - sprinting: MIDBODY speed > roaming_max
+        - quiescence: ALL speeds <= quiescence_max
+
+    Returns:
+    - np.ndarray of shape (n_frames,), where each value is an integer
+      representing the worm's state for that frame.
+    """
+    # Validate input thresholds
+    if len(thresholds) != 3:
+        raise ValueError("Thresholds array must contain exactly 3 elements.")
+    if not np.all(np.diff(thresholds) > 0):
+        raise ValueError("Threshold values must be in ascending order.")
+
+    n_frames = smoothed_speeds.shape[0]
+    worm_states = np.full(n_frames, np.nan)  # Initialize with NaNs
+
+    speed_head_base, speed_midbody, speed_tail_base = smoothed_speeds.T
+    abs_midbody_speed = np.abs(speed_midbody)
+
+    # Unpack thresholds for readability
+    quiescence_max, dwelling_max, roaming_max = thresholds
+
+    # Classify states based on speed thresholds
+    # 1: Dwelling (0 to dwelling_max)
+    dwelling_mask = (abs_midbody_speed >= 0) & (abs_midbody_speed <= dwelling_max)
+    worm_states[dwelling_mask] = 1
+
+    # 2: Cruising (dwelling_max to roaming_max)
+    roaming_mask = (abs_midbody_speed > dwelling_max) & (abs_midbody_speed <= roaming_max)
+    worm_states[roaming_mask] = 2
+
+    # 3: Sprinting (> roaming_max)
+    sprinting_mask = abs_midbody_speed > roaming_max
+    worm_states[sprinting_mask] = 3
+
+    # 0: Quiescence (all speeds <= quiescence_max)
+    quiescence_mask = (
+        (np.abs(speed_head_base) <= quiescence_max) &
+        (np.abs(speed_midbody) <= quiescence_max) &
+        (np.abs(speed_tail_base) <= quiescence_max)
+    )
+    worm_states[quiescence_mask] = 0
+
+    return worm_states
 
 def _get_vec_durations(event_vec):
     durations_list = []
@@ -264,6 +324,16 @@ def get_events(df, fps, worm_length = None, _is_debug=False):
         turn_vector, _, _ = _find_turns(df, fps)
         events_df['turn'] = turn_vector.astype(np.float32)
 
+    # BEHAVIOURAL STATES
+    speed_names = ['speed_head_base', 'speed_midbody', 'speed_tail_base']
+    if all(name in df for name in speed_names):
+        speeds = np.column_stack([df[name] for name in speed_names])
+        smooth_speeds = np.apply_along_axis(nanmedian_filter, 0, speeds, 31)
+        worm_states = classify_worm_states(smooth_speeds)
+        events_df['behavioural_states'] = worm_states
+    else:
+        # Optionally, log a warning or fill with NaN
+        events_df['behavioural_states'] = np.full(df.shape[0], np.nan)
 
     if _is_debug:
         from matplotlib import pyplot as plt

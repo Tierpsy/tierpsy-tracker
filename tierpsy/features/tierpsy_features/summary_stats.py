@@ -381,15 +381,8 @@ def get_fractional_states(timeseries_data, median_smooth_window=31, speed_thresh
     Assumes a 'motion_mode' column or similar is present.
     Returns a pd.Series with fractions.
     """
-    # get speed time series
-    speed_names = ['speed_head_base', 'speed_midbody', 'speed_tail_base']
-    speeds = np.column_stack([timeseries_data[name] for name in speed_names])
-
-    # smooth the time series
-    smooth_speeds = np.apply_along_axis(nanmedian_filter, 0, speeds, median_smooth_window)
-
-    # use the smoothed speed to classify the worms into motion states
-    worm_states = classify_worm_states(smooth_speeds, speed_thresholds)
+    # get the worm states from the timeseries data
+    worm_states = timeseries_data.get('behavioural_states', None)
     fractions = {}
     total = np.isfinite(worm_states).sum()
     for state, label in enumerate(['quiescence', 'dwelling', 'roaming', 'sprinting']):
@@ -407,15 +400,6 @@ def get_summary_stats(timeseries_data,
 
     if timeseries_data.size == 0:
         return pd.DataFrame([])
-
-    # --- calculating behavioural_states ---
-    
-    speed_names = ['speed_head_base', 'speed_midbody', 'speed_tail_base']
-    speeds = np.column_stack([timeseries_data[name] for name in speed_names])
-    smooth_speeds = np.apply_along_axis(nanmedian_filter, 0, speeds, 31)
-    worm_states = classify_worm_states(smooth_speeds)
-    timeseries_data = timeseries_data.copy()
-    timeseries_data['behavioural_states'] = worm_states
 
     ts_cols_all, v_sign_cols, feats2norm, ts_cols_norm = select_timeseries(
         timeseries_feats_columns, ventral_signed_columns, feats2normalize,
