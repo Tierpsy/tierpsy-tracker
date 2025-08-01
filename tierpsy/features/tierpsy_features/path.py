@@ -274,6 +274,9 @@ def straightness(x, y, window):
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     
+    x = fill_nans_1D(x)
+    y = fill_nans_1D(y)
+
     if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
         raise ValueError("x and y must be 1-D arrays of the same length")
     if window < 1 or not float(window).is_integer():
