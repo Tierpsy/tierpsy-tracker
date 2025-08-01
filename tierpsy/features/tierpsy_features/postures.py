@@ -14,7 +14,7 @@ from collections import OrderedDict
 
 from .helper import DataPartition, load_eigen_projections
 
-morphology_columns = ['length', 'area', 'width_head_base', 'width_midbody', 'width_tail_base']
+morphology_columns = ['length', 'area', 'width_head_base', 'width_midbody', 'width_tail_base','obb_ratio']
 
 posture_columns = ['quirkiness', 'major_axis',
        'minor_axis', 'eigen_projection_1', 'eigen_projection_2',
@@ -68,6 +68,39 @@ def get_length(skeletons):
     w_length = np.sum(segment_sizes, axis=1)
     return w_length
 
+def get_oriented_bounding_box_ratio(skeletons):
+    """
+    Calculate the oriented bounding box (OBB) ratio for each skeleton.
+
+    Parameters:
+    - skeletons : np.ndarray
+        Array of skeleton coordinates with shape (n_frames, n_segments, 2).
+
+    Returns:
+    - obb_length : np.ndarray
+        Length of the longer side of the oriented bounding box.
+    - obb_width : np.ndarray
+        Length of the shorter side of the oriented bounding box.
+    """
+    n_frames = skeletons.shape[0]
+    obb_ratio = np.full(n_frames, np.nan)  # Initialize with NaN
+
+    for i, skeleton in enumerate(skeletons):
+        if np.isnan(skeleton).any():
+            continue  # Skip frames with NaN values
+
+        # Calculate the oriented bounding box using OpenCV
+        rect = cv2.minAreaRect(skeleton.astype(np.float32))
+        (width, height) = rect[1]
+
+        # Ensure width <= height
+        if width > height:
+            width, height = height, width
+
+        # Calculate area, length, and width
+        obb_ratio[i] = width / height if height != 0 else np.nan
+
+    return obb_ratio
 
 def get_morphology_features(skeletons, 
                             widths = None, 
@@ -90,7 +123,11 @@ def get_morphology_features(skeletons,
         #data['width_length_ratio'] = widths_seg['midbody']/lengths
         for p in widths_seg:
             data['width_' + p] = widths_seg[p]
-       
+
+    # Calculate the oriented bounding box ratio
+    obb_ratios = get_oriented_bounding_box_ratio(skeletons)
+    data['obb_ratio'] = obb_ratios
+
     data = pd.DataFrame.from_dict(data)
     return data
 
