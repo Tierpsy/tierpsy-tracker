@@ -16,7 +16,7 @@ event_region_labels = {
             'motion_mode': {-1:'backward', 1:'forward', 0:'paused',},
             'behavioural_states': {0: 'quiescence', 1: 'dwelling', 2: 'roaming', 3: 'sprinting'},
             'food_region': {-1:'outside', 1:'inside', 0:'edge'},
-            'turn': {1:'inter', 0:'intra'}
+            'turn': {1:'active', 0:'not_active'}
             }
 
 assert set(event_region_labels.keys()).issubset(event_columns)
@@ -51,48 +51,40 @@ def _get_pulses_indexes(light_on, min_window_size=0, is_pad = True):
     return turn_on[good], turn_off[good]
 
 #%%
-def _find_turns(worm_data,
-                fps,
-                d_ratio_th = (0.15, 0.075),
-                ang_v_th = (0.75, 0.35),
-                interp_window_s = 0.5
-                ):
-    #check the necessary columns are in the dataframe
-    assert set(('head_tail_distance', 'major_axis', 'angular_velocity')).issubset(set(worm_data.columns))
+def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
+    """
+    Simplified turn detection using smoothed angular velocity of the midbody.
 
-    #adjust the interpolation window in frames
-    w_interp = int(fps*interp_window_s)
-    w_interp = w_interp if w_interp%2 == 1 else w_interp+1
+    Parameters:
+    - worm_data : DataFrame with skeleton or centroid positions.
+    - fps : Frames per second of the video.
+    - ang_vel_thresh : Angular velocity threshold to detect turns.
+    - smooth_window_sec : Smoothing window size in seconds.
 
-    try:
-        #get the ratio of this mesurements
-        #the cubic interpolation is important to detect this feature
-        d_ratio = 1-(worm_data['head_tail_distance']/worm_data['major_axis'])
-        d_ratio = d_ratio.rolling(window = w_interp).min().interpolate(method='cubic')
-        with np.errstate(invalid='ignore'):
-            ang_velocity = worm_data['angular_velocity'].abs()
-        ang_velocity = ang_velocity.rolling(window = w_interp).max().interpolate(method='cubic')
-    except ValueError:
-        #there was an error in the interpolation
-        return [np.full(worm_data.shape[0], np.nan) for _ in range(3)]
+    Returns:
+    - turn_vector : Boolean array, True at frames where a turn is detected.
+    """
+    import numpy as np
+    import pandas as pd
 
+    # Ensure required columns are present
+    if 'angular_velocity' not in worm_data:
+        raise ValueError("worm_data must contain 'angular_velocity' column.")
 
-    #find candidate turns that satisfy at the same time the higher threshold
-    turns_vec_ini = (d_ratio>d_ratio_th[0]) & (ang_velocity>ang_v_th[0])
+    # Smooth angular velocity
+    smooth_window_frames = int(smooth_window_sec * fps)
+    if smooth_window_frames % 2 == 0:
+        smooth_window_frames += 1  # Ensure odd window size for centered smoothing
+    ang_velocity = pd.Series(worm_data['angular_velocity']).rolling(
+        window=smooth_window_frames, center=True, min_periods=1).mean().values
 
-    #refine the estimates with the lower threshold in each vector independently
-    d_ration_candidates = _get_pulses_indexes(d_ratio>d_ratio_th[1])
-    d_ration_r = [x for x in zip(*d_ration_candidates) if np.any(turns_vec_ini[x[0]:x[1]+1])]
+    # Use absolute value of angular velocity
+    ang_velocity = np.abs(ang_velocity)
 
-    ang_v_candidates = _get_pulses_indexes(ang_velocity>ang_v_th[1])
-    ang_v_r = [x for x in zip(*ang_v_candidates) if np.any(turns_vec_ini[x[0]:x[1]+1])]
+    # Detect turns based on threshold
+    turn_vector = ang_velocity > ang_vel_thresh
 
-    #combine the results into a final vector
-    turns_vec = np.zeros_like(turns_vec_ini)
-    for x in d_ration_r + ang_v_r:
-        turns_vec[x[0]:x[1]+1] = True
-
-    return turns_vec, d_ratio, ang_velocity
+    return turn_vector
 
 #%%
 def _range_vec(vec, th):
@@ -321,7 +313,7 @@ def get_events(df, fps, worm_length = None, _is_debug=False):
 
     #TURN EVENT
     if set(('head_tail_distance', 'major_axis', 'angular_velocity')).issubset(set(df.columns)):
-        turn_vector, _, _ = _find_turns(df, fps)
+        turn_vector = _find_turns(df, fps)
         events_df['turn'] = turn_vector.astype(np.float32)
 
     # BEHAVIOURAL STATES
