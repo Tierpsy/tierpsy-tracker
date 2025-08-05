@@ -444,6 +444,33 @@ def get_summary_stats(timeseries_data,
     )
     exp_feats.append(feat_stats_m_subdiv_states)
     
+    # Calculation for event mode fractions in all behavioral states
+    event_mode_subdiv_feats = ['motion_mode','turn']
+    for event_type in event_mode_subdiv_feats:
+        subdivision_dict = {'behavioural_states': [event_type]}
+
+        # Subdivide the event type by behavioural_states
+        subdivided_features = _get_subdivided_features(
+            timeseries_data,
+            subdivision_dict=subdivision_dict
+        )
+
+        # Calculate the fraction of time spent in each event mode for each behavioral state
+        fractions = {}
+        for state, label in event_region_labels['behavioural_states'].items():
+            for event_flag, event_label in event_region_labels[event_type].items():
+                col_name = f'{event_type}_w_{label}'
+                if col_name in subdivided_features:
+                    event_data = subdivided_features[col_name]
+                    total_time_in_state = np.isfinite(event_data).sum()
+                    event_time_in_state = np.nansum(event_data == event_flag)
+                    fractions[f'fraction_{event_type}_{event_label}_w_{label}'] = (
+                        event_time_in_state / total_time_in_state if total_time_in_state > 0 else np.nan
+                    )
+
+        # Add the calculated fractions to the summary stats
+        exp_feats.append(pd.Series(fractions))
+    
     # EM: check if path extent features need to be calculated:
     is_extent_features = check_if_path_extent_features(selected_feat)
     if is_extent_features:
