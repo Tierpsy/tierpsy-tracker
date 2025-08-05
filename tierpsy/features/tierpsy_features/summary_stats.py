@@ -433,7 +433,7 @@ def get_summary_stats(timeseries_data,
 
     # subdivisions by behavioural states
     behavioural_state_subdiv_feats = ['speed_midbody', 'angular_velocity_midbody',
-                                       'curvature_midbody', 'motion_mode_backward_fraction']
+                                       'curvature_midbody','path_straightness_midbody','bounding_box_ratio']
     feat_stats_m_subdiv_states = get_df_quantiles(
         timeseries_data,
         feats2check=behavioural_state_subdiv_feats,
