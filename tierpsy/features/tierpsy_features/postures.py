@@ -14,7 +14,7 @@ from collections import OrderedDict
 
 from .helper import DataPartition, load_eigen_projections
 
-morphology_columns = ['length', 'area', 'width_head_base', 'width_midbody', 'width_tail_base','obb_ratio']
+morphology_columns = ['length', 'area', 'width_head_base', 'width_midbody', 'width_tail_base','bounding_box_ratio']
 
 posture_columns = ['quirkiness', 'major_axis',
        'minor_axis', 'eigen_projection_1', 'eigen_projection_2',
@@ -126,7 +126,7 @@ def get_morphology_features(skeletons,
 
     # Calculate the oriented bounding box ratio
     obb_ratios = get_oriented_bounding_box_ratio(skeletons)
-    data['obb_ratio'] = obb_ratios
+    data['bounding_box_ratio'] = obb_ratios
 
     data = pd.DataFrame.from_dict(data)
     return data
