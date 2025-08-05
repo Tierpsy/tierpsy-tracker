@@ -16,7 +16,7 @@ event_region_labels = {
             'motion_mode': {-1:'backward', 1:'forward', 0:'paused',},
             'behavioural_states': {0: 'quiescence', 1: 'dwelling', 2: 'roaming', 3: 'sprinting'},
             'food_region': {-1:'outside', 1:'inside', 0:'edge'},
-            'turn': {1:'active', 0:'not_active'}
+            'turn': {1:'intra', 0:'inter'}
             }
 
 assert set(event_region_labels.keys()).issubset(event_columns)
