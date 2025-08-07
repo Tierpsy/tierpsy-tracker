@@ -93,7 +93,7 @@ def get_timeseries_features(skeletons,
         features_df = features_df.join(food)
     
     
-    path_curvatures, path_coords, path_straightness = get_path_curvatures(skeletons)
+    path_curvatures, path_coords, path_straightness = get_path_curvatures(skeletons,fps)
     features_df = features_df.join(path_curvatures)
     features_df = features_df.join(path_coords)
     features_df = features_df.join(path_straightness)

@@ -26,10 +26,26 @@ path_curvature_columns_aux = ['coord_x_body', 'coord_y_body',
                               'coord_x_head', 'coord_y_head'
                               ]
 
-path_straightness_columns = ['path_straightness_midbody',
-                             'path_straightness_tail',
-                             'path_straightness_body',
-                             'path_straightness_head']
+path_straightness_columns = ['path_straightness_midbody_0.5s',
+                             'path_straightness_tail_0.5s',
+                             'path_straightness_body_0.5s',
+                             'path_straightness_head_0.5s',
+                             'path_straightness_midbody_1s',
+                             'path_straightness_tail_1s',
+                             'path_straightness_body_1s',
+                             'path_straightness_head_1s',
+                             'path_straightness_midbody_3s',
+                             'path_straightness_tail_3s',
+                             'path_straightness_body_3s',
+                             'path_straightness_head_3s',
+                             'path_straightness_midbody_5s',
+                             'path_straightness_tail_5s',
+                             'path_straightness_body_5s',
+                             'path_straightness_head_5s',
+                             'path_straightness_midbody_10s',
+                             'path_straightness_tail_10s',
+                             'path_straightness_body_10s',
+                             'path_straightness_head_10s',]
 
 DFLT_ARGS = dict(
         path_step = 11,
@@ -148,7 +164,7 @@ def _h_path_curvature(skeletons,
     
     return curvature_t, body_coords
 
-def get_path_curvatures(skeletons, **argkws):
+def get_path_curvatures(skeletons,fps, **argkws):
     path_curvatures = []    
     path_coords = []
     path_straightness_list = []
@@ -172,9 +188,12 @@ def get_path_curvatures(skeletons, **argkws):
         # Calculate straightness
         x = coords[:, 0]
         y = coords[:, 1]
-        path_straightness_window = 125 # 5 seconds at 25 fps
-        part_straightness = straightness(x, y, path_straightness_window)
-        path_straightness_list.append(('path_straightness_' + partition_str, part_straightness))
+        time_windows = [0.5,1,3,5,10]
+        for window_sec in time_windows:
+            path_straightness_window = int(window_sec * fps)  # Convert time window to frames
+            part_straightness = straightness(x, y, path_straightness_window)
+            col_name = f'path_straightness_{partition_str}_{window_sec}s'
+            path_straightness_list.append((col_name, part_straightness))
         
     cols, dat = zip(*path_straightness_list)
     path_straightness_df = pd.DataFrame(np.array(dat).T, columns=cols)

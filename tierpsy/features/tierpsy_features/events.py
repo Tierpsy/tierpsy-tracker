@@ -7,7 +7,7 @@
 
 import numpy as np
 import pandas as pd
-from tierpsy.features.tierpsy_features.helper import nanmedian_filter
+from tierpsy.features.tierpsy_features.helper import nanmedian_filter, fill_nans_1D
 event_columns = ['motion_mode','behavioural_states', 'food_region', 'turn']
 durations_columns = ['event_type', 'region',
                      'duration', 'timestamp_initial',
@@ -53,7 +53,8 @@ def _get_pulses_indexes(light_on, min_window_size=0, is_pad = True):
 #%%
 def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     """
-    Simplified turn detection using smoothed angular velocity of the midbody.
+    This function detects turns based on the angular velocity of the worm's midbody.
+    It smooths the angular velocity and flags frames where the absolute value exceeds a threshold.
 
     Parameters:
     - worm_data : DataFrame with skeleton or centroid positions.
@@ -75,7 +76,8 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     smooth_window_frames = int(smooth_window_sec * fps)
     if smooth_window_frames % 2 == 0:
         smooth_window_frames += 1  # Ensure odd window size for centered smoothing
-    ang_velocity = pd.Series(worm_data['angular_velocity']).rolling(
+    interpolated_angular_velocity = fill_nans_1D(worm_data['angular_velocity'].values)
+    ang_velocity = pd.Series(interpolated_angular_velocity).rolling(
         window=smooth_window_frames, center=True, min_periods=1).mean().values
 
     # Use absolute value of angular velocity

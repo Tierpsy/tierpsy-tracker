@@ -45,7 +45,12 @@ velocities_columns = ['speed',
                        'speed_head_tip',
                        'angular_velocity_head_tip', 
                        'speed_tail_tip',
-                       'angular_velocity_tail_tip']
+                       'angular_velocity_tail_tip',
+                       'angular_velocity_head',
+                       'angular_velocity_tail',
+                       'speed_head',
+                       'speed_tail',
+                       ]
 
 #%% features that are relative to specific body parts
 relative_to_dict = {'body' : ('head_tip', 'neck', 'hips', 'tail_tip'), 
@@ -56,6 +61,8 @@ relative_to_dict = {'body' : ('head_tip', 'neck', 'hips', 'tail_tip'),
                'midbody' : [],
                'head_tip' : [],
                'tail_tip' : [],
+               'head' : [],
+               'tail' : []
                }
 
 #%%

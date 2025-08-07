@@ -77,10 +77,7 @@ def get_oriented_bounding_box_ratio(skeletons):
         Array of skeleton coordinates with shape (n_frames, n_segments, 2).
 
     Returns:
-    - obb_length : np.ndarray
-        Length of the longer side of the oriented bounding box.
-    - obb_width : np.ndarray
-        Length of the shorter side of the oriented bounding box.
+    - obb_ratio : np.ndarray
     """
     n_frames = skeletons.shape[0]
     obb_ratio = np.full(n_frames, np.nan)  # Initialize with NaN

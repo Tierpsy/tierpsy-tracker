@@ -163,12 +163,12 @@ def get_df_quantiles(df,
     for q in q_vals:
         q_dat = feat_mean.loc[q]
         q_str = '_{}th'.format(int(round(q*100)))
-        for feat, val in q_dat.iteritems():
+        for feat, val in q_dat.items():
             dat.append((val, feat+q_str))
 
 
     IQR = feat_mean.loc[0.75] - feat_mean.loc[0.25]
-    dat += [(val, feat + '_IQR') for feat, val in IQR.iteritems()]
+    dat += [(val, feat + '_IQR') for feat, val in IQR.items()]
 
     feat_mean_s = pd.Series(*list(zip(*dat)))
     return feat_mean_s
@@ -432,12 +432,20 @@ def get_summary_stats(timeseries_data,
                                           is_normalize = False)
 
     # subdivisions by behavioural states
-    behavioural_state_subdiv_feats = ['speed_midbody', 'angular_velocity_midbody',
-                                       'curvature_midbody','path_straightness_midbody','bounding_box_ratio']
+    behavioural_state_subdiv_feats = ['speed_midbody','speed_head','speed_tail', 'angular_velocity_midbody',
+                                      'angular_velocity_head','angular_velocity_tail',
+                                       'curvature_midbody','curvature_head','curvature_tail',
+                                       'path_straightness_midbody','path_straightness_midbody_0.5s',
+                                       'path_straightness_midbody_1s','path_straightness_midbody_3s',
+                                       'path_straightness_midbody_5s','path_straightness_midbody_10s',
+                                       'bounding_box_ratio']
+    behavioural_state_subdiv_feats_abs = ['angular_velocity_midbody',
+                                      'angular_velocity_head','angular_velocity_tail',
+                                       'curvature_midbody','curvature_head','curvature_tail']
     feat_stats_m_subdiv_states = get_df_quantiles(
         timeseries_data,
         feats2check=behavioural_state_subdiv_feats,
-        feats2abs=[],
+        feats2abs=behavioural_state_subdiv_feats_abs,
         feats2norm=[],
         subdivision_dict={'behavioural_states': behavioural_state_subdiv_feats},
         is_abs_ventral=True
