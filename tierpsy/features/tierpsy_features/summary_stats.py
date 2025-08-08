@@ -438,10 +438,20 @@ def get_summary_stats(timeseries_data,
                                        'path_straightness_midbody','path_straightness_midbody_0.5s',
                                        'path_straightness_midbody_1s','path_straightness_midbody_3s',
                                        'path_straightness_midbody_5s','path_straightness_midbody_10s',
-                                       'bounding_box_ratio']
+                                       'bounding_box_ratio',
+                                       'd_speed_midbody','d_speed_head','d_speed_tail', 'd_angular_velocity_midbody',
+                                      'd_angular_velocity_head','d_angular_velocity_tail',
+                                       'd_curvature_midbody','d_curvature_head','d_curvature_tail',
+                                       'd_path_straightness_midbody','d_path_straightness_midbody_0.5s',
+                                       'd_path_straightness_midbody_1s','d_path_straightness_midbody_3s',
+                                       'd_path_straightness_midbody_5s','d_path_straightness_midbody_10s',
+                                       'd_bounding_box_ratio']
     behavioural_state_subdiv_feats_abs = ['angular_velocity_midbody',
                                       'angular_velocity_head','angular_velocity_tail',
-                                       'curvature_midbody','curvature_head','curvature_tail']
+                                       'curvature_midbody','curvature_head','curvature_tail',
+                                       'd_angular_velocity_midbody',
+                                      'd_angular_velocity_head','d_angular_velocity_tail',
+                                       'd_curvature_midbody','d_curvature_head','d_curvature_tail']
     feat_stats_m_subdiv_states = get_df_quantiles(
         timeseries_data,
         feats2check=behavioural_state_subdiv_feats,

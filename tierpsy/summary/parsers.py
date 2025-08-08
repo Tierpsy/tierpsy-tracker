@@ -20,6 +20,7 @@ feature_sets_filenames = {
         'tierpsy_level_1' : 'tierpsy_level_1.csv',
         'tierpsy_level_2' : 'tierpsy_level_2.csv',
         'tierpsy_level_3' : 'tierpsy_level_3.csv',
+        'tierpsy_level_4' : 'tierpsy_level_4.csv',
         'tierpsy_8' : 'tierpsy_8.csv',
         'tierpsy_16' : 'tierpsy_16.csv',
         'tierpsy_256' : 'tierpsy_256.csv',
