@@ -73,6 +73,7 @@ class ReadVideoFFMPEG:
                    '-vsync', 'drop',  # avoid repeating frames due to changes in the time stamp, it is better to solve those situations manually after
                    '-threads', '0',
                    '-vf', 'showinfo',
+                   '-pix_fmt', 'gray',  # force 8-bit single channel
                    '-vcodec', 'rawvideo', '-']
 
         self.vid_frame_pos = []
