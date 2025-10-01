@@ -315,7 +315,7 @@ dflt_param_list = [
         '''),
 
     ('nn_filter_to_use',
-        'pytorch_default',
+        'none',
         """
         Set to "pytorch_default" or "tensorflow_default" if you want to
         use a pretrained neural network model to filter worms.
