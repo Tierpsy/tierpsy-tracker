@@ -26,14 +26,10 @@ path_curvature_columns_aux = ['coord_x_body', 'coord_y_body',
                               'coord_x_head', 'coord_y_head'
                               ]
 
-path_straightness_columns = ['path_straightness_midbody_0.5s',
-                             'path_straightness_tail_0.5s',
-                             'path_straightness_body_0.5s',
-                             'path_straightness_head_0.5s',
-                             'path_straightness_midbody_1s',
-                             'path_straightness_tail_1s',
-                             'path_straightness_body_1s',
-                             'path_straightness_head_1s',
+path_straightness_columns = ['path_straightness_midbody_20s',
+                             'path_straightness_tail_20s',
+                             'path_straightness_body_20s',
+                             'path_straightness_head_20s',
                              'path_straightness_midbody_3s',
                              'path_straightness_tail_3s',
                              'path_straightness_body_3s',
@@ -188,7 +184,7 @@ def get_path_curvatures(skeletons,fps, **argkws):
         # Calculate straightness
         x = coords[:, 0]
         y = coords[:, 1]
-        time_windows = [0.5,1,3,5,10]
+        time_windows = [3,5,10,20]
         for window_sec in time_windows:
             path_straightness_window = int(window_sec * fps)  # Convert time window to frames
             part_straightness = straightness(x, y, path_straightness_window)
