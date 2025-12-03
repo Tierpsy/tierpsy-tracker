@@ -32,7 +32,7 @@ valid_feature_types = list(feature_files_ext.keys())
 valid_summary_types = ['plate', 'trajectory', 'plate_augmented']
 
 feat_df_id_cols = \
-    ['file_id', 'i_fold', 'worm_index', 'n_skeletons', 'well_name', 'is_good_well']
+    ['file_id', 'filename', 'i_fold', 'worm_index', 'well_name','n_skeletons', 'is_good_well']
 
 
 def check_in_list(x, list_of_x, x_name):
@@ -323,6 +323,13 @@ def _calculate_summaries_one_video(
             # Important otherwise if some files have all nan in a feature
             # that other files had values for, it misaligns the feat matrix
             df.insert(0, 'file_id', file_id)
+            df.insert(1, 'filename', fname) # add the filename
+            # Extract well_name from fname if present (always use the last one)
+            # This makes it compatible with WellCropper results
+            matches = re.findall(r'_well_([A-Za-z0-9]+)', fname)
+            if matches:
+                well_name = matches[-1]
+                df.insert(2, 'well_name', well_name)
             df = sort_columns(df, selected_feat)
         except (
                 AttributeError, IOError, KeyError,
