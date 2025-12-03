@@ -72,11 +72,11 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     if 'angular_velocity' not in worm_data:
         raise ValueError("worm_data must contain 'angular_velocity' column.")
 
-    # Smooth angular velocity
+    # interpolate over NaNs and smooth angular velocity
     smooth_window_frames = int(smooth_window_sec * fps)
     if smooth_window_frames % 2 == 0:
         smooth_window_frames += 1  # Ensure odd window size for centered smoothing
-    interpolated_angular_velocity = fill_nans_1D(worm_data['angular_velocity'].values)
+    interpolated_angular_velocity = fill_nans_1D(worm_data['angular_velocity'].values,max_gap=3*fps)
     ang_velocity = pd.Series(interpolated_angular_velocity).rolling(
         window=smooth_window_frames, center=True, min_periods=1).mean().values
 

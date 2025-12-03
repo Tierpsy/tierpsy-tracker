@@ -141,7 +141,7 @@ def nanmedian_filter(time_series: np.ndarray, window_size: int) -> np.ndarray:
 
     return smoothed
 
-def fill_nans_1D(arr):
+def fill_nans_1D(arr, max_gap):
     """
     Linearly interpolate over NaN values in a 1D NumPy array.
 
@@ -155,6 +155,10 @@ def fill_nans_1D(arr):
     ----------
     arr : array-like, shape (N,)
         One-dimensional array containing numeric values and possible NaNs.
+
+    max_gap : int
+        Maximum number of consecutive NaNs to interpolate over. If a gap of
+        NaNs exceeds this size, those NaNs will remain unchanged.
 
     Returns
     -------
@@ -183,6 +187,20 @@ def fill_nans_1D(arr):
         good_idx,      # x-coordinates of known (non-NaN) values
         arr[good_idx]  # known y-values
     )
+
+    # revert the change for nan sections larger than the maximum allowed gap
+    if len(good_idx) > 0:
+        # Handle NaNs at the beginning
+        if good_idx[0] > 0:
+            arr_filled[:good_idx[0]] = np.nan
+        # Handle NaNs at the end
+        if good_idx[-1] < len(arr) - 1:
+            arr_filled[good_idx[-1] + 1:] = np.nan
+        # Handle large gaps in between
+        for i in range(len(good_idx) - 1):
+            gap_size = good_idx[i + 1] - good_idx[i] - 1
+            if gap_size > max_gap:
+                arr_filled[good_idx[i] + 1:good_idx[i + 1]] = np.nan
 
     return arr_filled
 

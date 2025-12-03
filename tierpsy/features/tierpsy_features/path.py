@@ -187,7 +187,7 @@ def get_path_curvatures(skeletons,fps, **argkws):
         time_windows = [3,5,10,20]
         for window_sec in time_windows:
             path_straightness_window = int(window_sec * fps)  # Convert time window to frames
-            part_straightness = straightness(x, y, path_straightness_window)
+            part_straightness = straightness(x, y, path_straightness_window, fps)
             col_name = f'path_straightness_{partition_str}_{window_sec}s'
             path_straightness_list.append((col_name, part_straightness))
         
@@ -255,7 +255,7 @@ def _test_plot_cnts_maps(ventral_contour, dorsal_contour):
     
         print(part)
       
-def straightness(x, y, window):
+def straightness(x, y, window, fps):
     """
     Compute a *windowed straightness index* for an (x, y) trajectory.
 
@@ -289,8 +289,8 @@ def straightness(x, y, window):
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     
-    x = fill_nans_1D(x)
-    y = fill_nans_1D(y)
+    x = fill_nans_1D(x, max_gap=3*fps)
+    y = fill_nans_1D(y, max_gap=3*fps)
 
     if x.ndim != 1 or y.ndim != 1 or x.size != y.size:
         raise ValueError("x and y must be 1-D arrays of the same length")
@@ -299,34 +299,50 @@ def straightness(x, y, window):
 
     N = x.size
     w = int(window)
+    
+    # result default: all NaN
+    S = np.full(N, np.nan)
     if N <= w:
-        # Not enough data for even one window
-        return np.full(N, np.nan)
-    #  step-wise Euclidean distances 
-    # d[k] = distance between frames k and k+1  (length N-1)
-    dx = np.diff(x)
-    dy = np.diff(y)
-    d  = np.hypot(dx, dy)
+        return S
 
-    # cumulative path length so we can query any window in O(1)
-    cum_d = np.concatenate(([0.0], np.cumsum(d)))
-    
-    #  path lengths for each window
-    path_len = cum_d[w:] - cum_d[:-w]
-    
-    #  net displacements for window ends 
-    net_dx = x[w:] - x[:-w]          # length N-w
-    net_dy = y[w:] - y[:-w]
-    net_disp = np.hypot(net_dx, net_dy)
+    # find contiguous valid (non-NaN) segments and compute straightness per segment
+    valid = ~np.isnan(x) & ~np.isnan(y)
+    if not np.any(valid):
+        return S
 
-    #  straightness for valid windows 
-    S_valid = net_disp / path_len          # length N-w
+    idx = np.flatnonzero(valid)
+    splits = np.where(np.diff(idx) != 1)[0]
+    starts = np.concatenate(([idx[0]], idx[splits + 1]))
+    ends = np.concatenate((idx[splits], [idx[-1]])) + 1  # end exclusive
 
-    #  pad with NaNs to match original length 
-    S = np.empty(N)
-    S[:N-w]  = S_valid
-    S[N-w:]  = np.nan                      # last (w) frames have no window
+    for s, e in zip(starts, ends):
+        M = e - s
+        if M <= w:
+            # segment too short to compute any valid window
+            continue
 
+        xs = x[s:e]
+        ys = y[s:e]
+
+        dx = np.diff(xs)
+        dy = np.diff(ys)
+        d = np.hypot(dx, dy)
+
+        cum_d = np.concatenate(([0.0], np.cumsum(d)))
+        path_len = cum_d[w:] - cum_d[:-w]
+
+        net_dx = xs[w:] - xs[:-w]
+        net_dy = ys[w:] - ys[:-w]
+        net_disp = np.hypot(net_dx, net_dy)
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            S_valid = net_disp / path_len
+
+        S_sub = np.empty(M)
+        S_sub[:M - w] = S_valid
+        S_sub[M - w:] = np.nan
+
+        S[s:e] = S_sub
     return S
 
 #%%
