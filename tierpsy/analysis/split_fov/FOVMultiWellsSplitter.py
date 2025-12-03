@@ -596,9 +596,9 @@ class FOVMultiWellsSplitter(object):
         for rr,cc in missing_rowcols:
             new_well = {}
             # calculate x,y,r
-            y = self.wells[self.wells['row'] == rr]['y'].median().astype(int)
-            x = self.wells[self.wells['col'] == cc]['x'].median().astype(int)
-            r = self.wells['r'].mean().astype(int)
+            y = int(self.wells[self.wells['row'] == rr]['y'].median())
+            x = int(self.wells[self.wells['col'] == cc]['x'].median())
+            r = int(self.wells['r'].mean())
             # append to temporary dict
             new_well['x'] = [x,]
             new_well['y'] = [y,]
