@@ -10,6 +10,7 @@ import random
 import math
 import pdb
 import tables,json
+import pandas as pd
 
 fold_args_dflt = {'n_folds' : 5,
                  'frac_worms_to_keep' : 0.8,
@@ -187,3 +188,24 @@ def get_fnamesum_headers(f2,feature_type, summary_type, iwin,
 
     header += ','.join(df_files_columns) + '\n'
     return header
+
+def load_column_mapping(mapping_csv):
+    """ Load a CSV file that maps column names to their descriptions.
+    The CSV should have two columns:
+    - Column 0: Column names
+    - Column 1: Descriptions or mappings for those column names
+    Returns a dictionary mapping column names to their descriptions.
+    """
+    df = pd.read_csv(mapping_csv, header=None)
+    return dict(zip(df[0], df[1]))
+
+
+def convert_fraction_to_percentage(df):
+    """ Multiplies by 100 all columns in df whose names contain '%'.
+    Handles missing or NaN values gracefully.
+    """
+    percent_cols = [col for col in df.columns if '%' in col]
+    for col in percent_cols:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            df[col] = df[col] * 100
+    return df
