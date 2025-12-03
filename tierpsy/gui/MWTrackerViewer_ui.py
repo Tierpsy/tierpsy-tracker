@@ -180,6 +180,23 @@ class Ui_MWTrackerViewer(object):
         self.spinBox_frame = QtWidgets.QSpinBox(self.centralWidget)
         self.spinBox_frame.setObjectName("spinBox_frame")
         self.gridLayout.addWidget(self.spinBox_frame, 0, 1, 1, 1)
+        # added label and time display
+        self.label_time = QtWidgets.QLabel(self.centralWidget)
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.label_time.setFont(font)
+        self.label_time.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_time.setObjectName("label_time")
+        self.gridLayout.addWidget(self.label_time, 0, 10, 1, 1)  # Adjust grid position as needed
+
+        self.time_display = QtWidgets.QLabel(self.centralWidget)
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.time_display.setFont(font)
+        self.time_display.setAlignment(QtCore.Qt.AlignCenter)
+        self.time_display.setObjectName("time_display")
+        self.gridLayout.addWidget(self.time_display, 0, 11, 1, 1)  # Adjust grid position as needed
+        # end of added label and time display
         self.imageSlider = QtWidgets.QSlider(self.centralWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -379,4 +396,6 @@ class Ui_MWTrackerViewer(object):
         self.comboBox_h5path.setItemText(0, _translate("MWTrackerViewer", "/mask"))
         self.comboBox_h5path.setItemText(1, _translate("MWTrackerViewer", "/full_data"))
         self.toolBar.setWindowTitle(_translate("MWTrackerViewer", "toolBar"))
+        self.label_time.setText(_translate("MWTrackerViewer", "Time (s)"))
+        self.time_display.setText(_translate("MWTrackerViewer", "0"))  # Default value
 

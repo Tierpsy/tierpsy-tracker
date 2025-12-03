@@ -703,7 +703,7 @@ class MarkersDrawer(FeatureReaderBase):
 
         nn = np.clip((feat_val - f_min)/(f_max - f_min), 0, 1)
         ind = int(np.round(nn*(self.n_colors-1)))
-
+        
         col = self.palette[ind]
         return col
 
@@ -1085,6 +1085,11 @@ class MWTrackerViewer_GUI( MarkersDrawer, PlotCommunicator,
             return
 
         super(TrackerViewerAuxGUI, self).readCurrentFrame()
+
+        # Update the time display
+        if self.fps > 0:  # Ensure FPS is valid
+            time_in_seconds = int(self.frame_number / self.fps)
+            self.ui.time_display.setText(f"{time_in_seconds}")
 
         # read the data of the particles that exists in the frame
         self.frame_data = self.getFrameData(self.frame_number)
