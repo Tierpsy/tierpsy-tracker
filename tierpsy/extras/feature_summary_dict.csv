@@ -1,0 +1,272 @@
+﻿angular_velocity_head_w_dwelling_abs_10th,minimum angular speed of head while dwelling
+angular_velocity_head_w_dwelling_abs_50th,median angular speed of head while dwelling
+angular_velocity_head_w_dwelling_abs_90th,maximum angular speed of head while dwelling
+angular_velocity_head_w_roaming_abs_10th,minimum angular speed of head while roaming
+angular_velocity_head_w_roaming_abs_50th,median angular speed of head while roaming
+angular_velocity_head_w_roaming_abs_90th,maximum angular speed of head while roaming
+angular_velocity_head_w_sprinting_abs_10th,minimum angular speed of head while sprinting
+angular_velocity_head_w_sprinting_abs_50th,median angular speed of head while sprinting
+angular_velocity_head_w_sprinting_abs_90th,maximum angular speed of head while sprinting
+angular_velocity_midbody_w_dwelling_abs_10th,minimum angular speed of midbody while dwelling
+angular_velocity_midbody_w_dwelling_abs_50th,median angular speed of midbody while dwelling
+angular_velocity_midbody_w_dwelling_abs_90th,maximum angular speed of midbody while dwelling
+angular_velocity_midbody_w_roaming_abs_10th,minimum angular speed of midbody while roaming
+angular_velocity_midbody_w_roaming_abs_50th,median angular speed of midbody while roaming
+angular_velocity_midbody_w_roaming_abs_90th,maximum angular speed of midbody while roaming
+angular_velocity_midbody_w_sprinting_abs_10th,minimum angular speed of midbody while sprinting
+angular_velocity_midbody_w_sprinting_abs_50th,median angular speed of midbody while sprinting
+angular_velocity_midbody_w_sprinting_abs_90th,maximum angular speed of midbody while sprinting
+angular_velocity_tail_w_dwelling_abs_10th,minimum angular speed of tail while dwelling
+angular_velocity_tail_w_dwelling_abs_50th,median angular speed of tail while dwelling
+angular_velocity_tail_w_dwelling_abs_90th,maximum angular speed of tail while dwelling
+angular_velocity_tail_w_roaming_abs_10th,minimum angular speed of tail while roaming
+angular_velocity_tail_w_roaming_abs_50th,median angular speed of tail while roaming
+angular_velocity_tail_w_roaming_abs_90th,maximum angular speed of tail while roaming
+angular_velocity_tail_w_sprinting_abs_10th,minimum angular speed of tail while sprinting
+angular_velocity_tail_w_sprinting_abs_50th,median angular speed of tail while sprinting
+angular_velocity_tail_w_sprinting_abs_90th,maximum angular speed of tail while sprinting
+bounding_box_ratio_10th,minimum bounding box ratio
+bounding_box_ratio_50th,median bounding box ratio
+bounding_box_ratio_90th,maximum bounding box ratio
+bounding_box_ratio_w_dwelling_10th,minimum bounding box ratio while dwelling
+bounding_box_ratio_w_dwelling_50th,median bounding box ratio while dwelling
+bounding_box_ratio_w_dwelling_90th,maximum bounding box ratio while dwelling
+bounding_box_ratio_w_quiescence_10th,minimum bounding box ratio while quiescent
+bounding_box_ratio_w_quiescence_50th,median bounding box ratio while quiescent
+bounding_box_ratio_w_quiescence_90th,maximum bounding box ratio while quiescent
+bounding_box_ratio_w_roaming_10th,minimum bounding box ratio while roaming
+bounding_box_ratio_w_roaming_50th,median bounding box ratio while roaming
+bounding_box_ratio_w_roaming_90th,maximum bounding box ratio while roaming
+bounding_box_ratio_w_sprinting_10th,minimum bounding box ratio while sprinting
+bounding_box_ratio_w_sprinting_50th,median bounding box ratio while sprinting
+bounding_box_ratio_w_sprinting_90th,maximum bounding box ratio while sprinting
+curvature_head_w_dwelling_abs_10th,minimum curvature of head while dwelling
+curvature_head_w_dwelling_abs_50th,median curvature head while dwelling
+curvature_head_w_dwelling_abs_90th,maximum curvature of head while dwelling
+curvature_head_w_quiescence_abs_10th,minimum curvature of head while quiescent
+curvature_head_w_quiescence_abs_50th,median curvature of head while quiescent
+curvature_head_w_quiescence_abs_90th,maximum curvature of head while quiescent
+curvature_head_w_roaming_abs_10th,minimum curvature of head while roaming
+curvature_head_w_roaming_abs_50th,median curvature of head while roaming
+curvature_head_w_roaming_abs_90th,maximum curvature of head while roaming
+curvature_head_w_sprinting_abs_10th,minimum curvature of head while sprinting
+curvature_head_w_sprinting_abs_50th,median curvature of head while sprinting
+curvature_head_w_sprinting_abs_90th,maximum curvature of head while sprinting
+curvature_midbody_w_dwelling_abs_10th,minimum curvature of midbody while dwelling
+curvature_midbody_w_dwelling_abs_50th,median curvature of midbody while dwelling
+curvature_midbody_w_dwelling_abs_90th,maximum curvature of midbody while dwelling
+curvature_midbody_w_quiescence_abs_10th,minimum curvature of midbody while quiescent
+curvature_midbody_w_quiescence_abs_50th,median curvature of midbody while quiescent
+curvature_midbody_w_quiescence_abs_90th,maximum curvature of midbody while quiescent
+curvature_midbody_w_roaming_abs_10th,minimum curvature of midbody while roaming
+curvature_midbody_w_roaming_abs_50th,median curvature of midbody while roaming
+curvature_midbody_w_roaming_abs_90th,maximum curvature of midbody while roaming
+curvature_midbody_w_sprinting_abs_10th,minimum curvature of midbody while sprinting
+curvature_midbody_w_sprinting_abs_50th,median curvature of midbody while sprinting
+curvature_midbody_w_sprinting_abs_90th,maximum curvature of midbody while sprinting
+curvature_tail_w_dwelling_abs_10th,minimum curvature of tail while dwelling
+curvature_tail_w_dwelling_abs_50th,median curvature of tail while dwelling
+curvature_tail_w_dwelling_abs_90th,maximum curvature of tail while dwelling
+curvature_tail_w_quiescence_abs_10th,minimum curvature of tail while quiescent
+curvature_tail_w_quiescence_abs_50th,median curvature of tail while quiescent
+curvature_tail_w_quiescence_abs_90th,maximum curvature of tail while quiescent
+curvature_tail_w_roaming_abs_10th,minimum curvature of tail while roaming
+curvature_tail_w_roaming_abs_50th,median curvature of tail while roaming
+curvature_tail_w_roaming_abs_90th,maximum curvature of tail while roaming
+curvature_tail_w_sprinting_abs_10th,minimum curvature of tail while sprinting
+curvature_tail_w_sprinting_abs_50th,median curvature of tail while sprinting
+curvature_tail_w_sprinting_abs_90th,maximum curvature of tail while sprinting
+d_angular_velocity_head_w_dwelling_abs_10th,minimum angular acceleration of head while dwelling
+d_angular_velocity_head_w_dwelling_abs_50th,median angular acceleration of head while dwelling
+d_angular_velocity_head_w_dwelling_abs_90th,maximum angular acceleration of head while dwelling
+d_angular_velocity_head_w_roaming_abs_10th,minimum angular acceleration of head while roaming
+d_angular_velocity_head_w_roaming_abs_50th,median angular acceleration of head while roaming
+d_angular_velocity_head_w_roaming_abs_90th,maximum angular acceleration of head while roaming
+d_angular_velocity_head_w_sprinting_abs_10th,minimum angular acceleration of head while sprinting
+d_angular_velocity_head_w_sprinting_abs_50th,median angular acceleration of head while sprinting
+d_angular_velocity_head_w_sprinting_abs_90th,maximum angular acceleration of head while sprinting
+d_angular_velocity_midbody_w_dwelling_abs_10th,minimum angular acceleration of midbody while dwelling
+d_angular_velocity_midbody_w_dwelling_abs_50th,median angular acceleration of midbody while dwelling
+d_angular_velocity_midbody_w_dwelling_abs_90th,maximum angular acceleration of midbody while dwelling
+d_angular_velocity_midbody_w_roaming_abs_10th,minimum angular acceleration of midbody while roaming
+d_angular_velocity_midbody_w_roaming_abs_50th,median angular acceleration of midbody while roaming
+d_angular_velocity_midbody_w_roaming_abs_90th,maximum angular acceleration of midbody while roaming
+d_angular_velocity_midbody_w_sprinting_abs_10th,minimum angular acceleration of midbody while sprinting
+d_angular_velocity_midbody_w_sprinting_abs_50th,median angular acceleration of midbody while sprinting
+d_angular_velocity_midbody_w_sprinting_abs_90th,maximum angular acceleration of midbody while sprinting
+d_angular_velocity_tail_w_dwelling_abs_10th,minimum angular acceleration of tail while dwelling
+d_angular_velocity_tail_w_dwelling_abs_50th,median angular acceleration of tail while dwelling
+d_angular_velocity_tail_w_dwelling_abs_90th,maximum angular acceleration of tail while dwelling
+d_angular_velocity_tail_w_roaming_abs_10th,minimum angular acceleration of tail while roaming
+d_angular_velocity_tail_w_roaming_abs_50th,median angular acceleration of tail while roaming
+d_angular_velocity_tail_w_roaming_abs_90th,maximum angular acceleration of tail while roaming
+d_angular_velocity_tail_w_sprinting_abs_10th,minimum angular acceleration of tail while sprinting
+d_angular_velocity_tail_w_sprinting_abs_50th,median angular acceleration of tail while sprinting
+d_angular_velocity_tail_w_sprinting_abs_90th,maximum angular acceleration of tail while sprinting
+d_bounding_box_ratio_10th,minimum rate of change of bounding box ratio
+d_bounding_box_ratio_50th,median rate of change of bounding box ratio
+d_bounding_box_ratio_90th,maximum rate of change of bounding box ratio
+d_bounding_box_ratio_w_dwelling_10th,minimum rate of change of bounding box ratio while dwelling
+d_bounding_box_ratio_w_dwelling_50th,median rate of change of bounding box ratio while dwelling
+d_bounding_box_ratio_w_dwelling_90th,maximum rate of change of bounding box ratio while dwelling
+d_bounding_box_ratio_w_quiescence_10th,minimum rate of change of bounding box ratio while quiescent
+d_bounding_box_ratio_w_quiescence_50th,median rate of change of bounding box ratio while quiescent
+d_bounding_box_ratio_w_quiescence_90th,maximum rate of change of bounding box ratio while quiescent
+d_bounding_box_ratio_w_roaming_10th,minimum rate of change of bounding box ratio while roaming
+d_bounding_box_ratio_w_roaming_50th,median rate of change of bounding box ratio while roaming
+d_bounding_box_ratio_w_roaming_90th,maximum rate of change of bounding box ratio while roaming
+d_bounding_box_ratio_w_sprinting_10th,minimum rate of change of bounding box ratio while sprinting
+d_bounding_box_ratio_w_sprinting_50th,median rate of change of bounding box ratio while sprinting
+d_bounding_box_ratio_w_sprinting_90th,maximum rate of change of bounding box ratio while sprinting
+d_curvature_head_w_dwelling_abs_10th,minimum bend speed of head while dwelling
+d_curvature_head_w_dwelling_abs_50th,median bend speed of head while dwelling
+d_curvature_head_w_dwelling_abs_90th,maximum bend speed of head while dwelling
+d_curvature_head_w_quiescence_abs_10th,minimum bend speed of head while quiescent
+d_curvature_head_w_quiescence_abs_50th,median bend speed of head while quiescent
+d_curvature_head_w_quiescence_abs_90th,maximum bend speed of head while quiescent
+d_curvature_head_w_roaming_abs_10th,minimum bend speed of head while roaming
+d_curvature_head_w_roaming_abs_50th,median bend speed of head while roaming
+d_curvature_head_w_roaming_abs_90th,maximum bend speed of head while roaming
+d_curvature_head_w_sprinting_abs_10th,minimum bend speed of head while sprinting
+d_curvature_head_w_sprinting_abs_50th,median bend speed of head while sprinting
+d_curvature_head_w_sprinting_abs_90th,maximum bend speed of head while sprinting
+d_curvature_midbody_w_dwelling_abs_10th,minimum bend speed of midbody while dwelling
+d_curvature_midbody_w_dwelling_abs_50th,median bend speed of midbody while dwelling
+d_curvature_midbody_w_dwelling_abs_90th,maximum bend speed of midbody while dwelling
+d_curvature_midbody_w_quiescence_abs_10th,minimum bend speed of midbody while quiescent
+d_curvature_midbody_w_quiescence_abs_50th,median bend speed of midbody while quiescent
+d_curvature_midbody_w_quiescence_abs_90th,maximum bend speed of midbody while quiescent
+d_curvature_midbody_w_roaming_abs_10th,minimum bend speed of midbody while roaming
+d_curvature_midbody_w_roaming_abs_50th,median bend speed of midbody while roaming
+d_curvature_midbody_w_roaming_abs_90th,maximum bend speed of midbody while roaming
+d_curvature_midbody_w_sprinting_abs_10th,minimum bend speed of midbody while sprinting
+d_curvature_midbody_w_sprinting_abs_50th,median bend speed of midbody while sprinting
+d_curvature_midbody_w_sprinting_abs_90th,maximum bend speed of midbody while sprinting
+d_curvature_tail_w_dwelling_abs_10th,minimum bend speed of tail while dwelling
+d_curvature_tail_w_dwelling_abs_50th,median bend speed of tail while dwelling
+d_curvature_tail_w_dwelling_abs_90th,maximum bend speed of tail while dwelling
+d_curvature_tail_w_quiescence_abs_10th,minimum bend speed of tail while quiescent
+d_curvature_tail_w_quiescence_abs_50th,median bend speed of tail while quiescent
+d_curvature_tail_w_quiescence_abs_90th,maximum bend speed of tail while quiescent
+d_curvature_tail_w_roaming_abs_10th,minimum bend speed of tail while roaming
+d_curvature_tail_w_roaming_abs_50th,median bend speed of tail while roaming
+d_curvature_tail_w_roaming_abs_90th,maximum bend speed of tail while roaming
+d_curvature_tail_w_sprinting_abs_10th,minimum bend speed of tail while sprinting
+d_curvature_tail_w_sprinting_abs_50th,median bend speed of tail while sprinting
+d_curvature_tail_w_sprinting_abs_90th,maximum bend speed of tail while sprinting
+d_speed_head_w_dwelling_10th,minimum acceleration of head while dwelling
+d_speed_head_w_dwelling_50th,median acceleration of head while dwelling
+d_speed_head_w_dwelling_90th,maximum acceleration of head while dwelling
+d_speed_head_w_roaming_10th,minimum acceleration of head while roaming
+d_speed_head_w_roaming_50th,median acceleration of head while roaming
+d_speed_head_w_roaming_90th,maximum acceleration of head while roaming
+d_speed_head_w_sprinting_10th,minimum acceleration of head while sprinting
+d_speed_head_w_sprinting_50th,median acceleration of head while sprinting
+d_speed_head_w_sprinting_90th,maximum acceleration of head while sprinting
+d_speed_midbody_w_dwelling_10th,minimum acceleration of midbody while dwelling
+d_speed_midbody_w_dwelling_50th,median acceleration of midbody while dwelling
+d_speed_midbody_w_dwelling_90th,maximum acceleration of midbody while dwelling
+d_speed_midbody_w_roaming_10th,minimum acceleration of midbody while roaming
+d_speed_midbody_w_roaming_50th,median acceleration of midbody while roaming
+d_speed_midbody_w_roaming_90th,maximum acceleration of midbody while roaming
+d_speed_midbody_w_sprinting_10th,minimum acceleration of midbody while sprinting
+d_speed_midbody_w_sprinting_50th,median acceleration of midbody while sprinting
+d_speed_midbody_w_sprinting_90th,maximum acceleration of midbody while sprinting
+d_speed_tail_w_dwelling_10th,minimum acceleration of tail while dwelling
+d_speed_tail_w_dwelling_50th,median acceleration of tail while dwelling
+d_speed_tail_w_dwelling_90th,maximum acceleration of tail while dwelling
+d_speed_tail_w_roaming_10th,minimum acceleration of tail while roaming
+d_speed_tail_w_roaming_50th,median acceleration of tail while roaming
+d_speed_tail_w_roaming_90th,maximum acceleration of tail while roaming
+d_speed_tail_w_sprinting_10th,minimum acceleration of tail while sprinting
+d_speed_tail_w_sprinting_50th,median acceleration of tail while sprinting
+d_speed_tail_w_sprinting_90th,maximum acceleration of tail while sprinting
+fraction_dwelling,dwelling time %
+fraction_motion_mode_backward_w_dwelling,reversal time % while dwelling
+fraction_motion_mode_backward_w_roaming,reversal time % while roaming
+fraction_motion_mode_backward_w_sprinting,reversal time % while sprinting
+fraction_quiescence,quiescence time %
+fraction_roaming,roaming time %
+fraction_sprinting,sprinting time %
+fraction_turn_intra_w_dwelling,turn time % while dwelling
+fraction_turn_intra_w_roaming,turn time % while roaming
+fraction_turn_intra_w_sprinting,turn time % while sprinting
+length_90th,length
+motion_mode_backward_fraction,reversal time %
+n_skeletons,number of skeletons
+path_straightness_midbody_20s_10th,minimum path straightness over 20s
+path_straightness_midbody_20s_50th,median path straightness over 20s
+path_straightness_midbody_20s_90th,maximum path straightness over 20s
+path_straightness_midbody_20s_w_dwelling_10th,minimum path straightness over 20s while dwelling
+path_straightness_midbody_20s_w_dwelling_50th,median path straightness over 20s while dwelling
+path_straightness_midbody_20s_w_dwelling_90th,maximum path straightness over 20s while dwelling
+path_straightness_midbody_20s_w_roaming_10th,minimum path straightness over 20s while roaming
+path_straightness_midbody_20s_w_roaming_50th,median path straightness over 20s while roaming
+path_straightness_midbody_20s_w_roaming_90th,maximum path straightness over 20s while roaming
+path_straightness_midbody_20s_w_sprinting_10th,minimum path straightness over 20s while sprinting
+path_straightness_midbody_20s_w_sprinting_50th,median path straightness over 20s while sprinting
+path_straightness_midbody_20s_w_sprinting_90th,maximum path straightness over 20s while sprinting
+path_straightness_midbody_10s_10th,minimum path straightness over 10s
+path_straightness_midbody_10s_50th,median path straightness over 10s
+path_straightness_midbody_10s_90th,maximum path straightness over 10s
+path_straightness_midbody_10s_w_dwelling_10th,minimum path straightness over 10s while dwelling
+path_straightness_midbody_10s_w_dwelling_50th,median path straightness over 10s while dwelling
+path_straightness_midbody_10s_w_dwelling_90th,maximum path straightness over 10s while dwelling
+path_straightness_midbody_10s_w_roaming_10th,minimum path straightness over 10s while roaming
+path_straightness_midbody_10s_w_roaming_50th,median path straightness over 10s while roaming
+path_straightness_midbody_10s_w_roaming_90th,maximum path straightness over 10s while roaming
+path_straightness_midbody_10s_w_sprinting_10th,minimum path straightness over 10s while sprinting
+path_straightness_midbody_10s_w_sprinting_50th,median path straightness over 10s while sprinting
+path_straightness_midbody_10s_w_sprinting_90th,maximum path straightness over 10s while sprinting
+path_straightness_midbody_3s_10th,minimum path straightness over 3s
+path_straightness_midbody_3s_50th,median path straightness over 3s
+path_straightness_midbody_3s_90th,maximum path straightness over 3s
+path_straightness_midbody_3s_w_dwelling_10th,minimum path straightness over 3s while dwelling
+path_straightness_midbody_3s_w_dwelling_50th,median path straightness over 3s while dwelling
+path_straightness_midbody_3s_w_dwelling_90th,maximum path straightness over 3s while dwelling
+path_straightness_midbody_3s_w_roaming_10th,minimum path straightness over 3s while roaming
+path_straightness_midbody_3s_w_roaming_50th,median path straightness over 3s while roaming
+path_straightness_midbody_3s_w_roaming_90th,maximum path straightness over 3s while roaming
+path_straightness_midbody_3s_w_sprinting_10th,minimum path straightness over 3s while sprinting
+path_straightness_midbody_3s_w_sprinting_50th,median path straightness over 3s while sprinting
+path_straightness_midbody_3s_w_sprinting_90th,maximum path straightness over 3s while sprinting
+path_straightness_midbody_5s_10th,minimum path straightness over 5s
+path_straightness_midbody_5s_50th,median path straightness over 5s
+path_straightness_midbody_5s_90th,maximum path straightness over 5s
+path_straightness_midbody_5s_w_dwelling_10th,minimum path straightness over 5s while dwelling
+path_straightness_midbody_5s_w_dwelling_50th,median path straightness over 5s while dwelling
+path_straightness_midbody_5s_w_dwelling_90th,maximum path straightness over 5s while dwelling
+path_straightness_midbody_5s_w_roaming_10th,minimum path straightness over 5s while roaming
+path_straightness_midbody_5s_w_roaming_50th,median path straightness over 5s while roaming
+path_straightness_midbody_5s_w_roaming_90th,maximum path straightness over 5s while roaming
+path_straightness_midbody_5s_w_sprinting_10th,minimum path straightness over 5s while sprinting
+path_straightness_midbody_5s_w_sprinting_50th,median path straightness over 5s while sprinting
+path_straightness_midbody_5s_w_sprinting_90th,maximum path straightness over 5s while sprinting
+speed_head_w_dwelling_10th,minimum speed of head while dwelling
+speed_head_w_dwelling_50th,median speed of head while dwelling
+speed_head_w_dwelling_90th,maximum speed of head while dwelling
+speed_head_w_roaming_10th,minimum speed of head while roaming
+speed_head_w_roaming_50th,median speed of head while roaming
+speed_head_w_roaming_90th,maximum speed of head while roaming
+speed_head_w_sprinting_10th,minimum speed of head while sprinting
+speed_head_w_sprinting_50th,median speed of head while sprinting
+speed_head_w_sprinting_90th,maximum speed of head while sprinting
+speed_midbody_w_dwelling_10th,minimum speed of midbody while dwelling
+speed_midbody_w_dwelling_50th,median speed of midbody while dwelling
+speed_midbody_w_dwelling_90th,maximum speed of midbody while dwelling
+speed_midbody_w_roaming_10th,minimum speed of midbody while roaming
+speed_midbody_w_roaming_50th,median speed of midbody while roaming
+speed_midbody_w_roaming_90th,maximum speed of midbody while roaming
+speed_midbody_w_sprinting_10th,minimum speed of midbody while sprinting
+speed_midbody_w_sprinting_50th,median speed of midbody while sprinting
+speed_midbody_w_sprinting_90th,maximum speed of midbody while sprinting
+speed_tail_w_dwelling_10th,minimum speed of tail while dwelling
+speed_tail_w_dwelling_50th,median speed of tail while dwelling
+speed_tail_w_dwelling_90th,maximum speed of tail while dwelling
+speed_tail_w_roaming_10th,minimum speed of tail while roaming
+speed_tail_w_roaming_50th,median speed of tail while roaming
+speed_tail_w_roaming_90th,maximum speed of tail while roaming
+speed_tail_w_sprinting_10th,minimum speed of tail while sprinting
+speed_tail_w_sprinting_50th,median speed of tail while sprinting
+speed_tail_w_sprinting_90th,maximum speed of tail while sprinting
+turn_intra_fraction,turn time % 

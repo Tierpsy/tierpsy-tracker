@@ -1,0 +1,33 @@
+﻿angular_velocity_midbody_w_dwelling_abs_50th,median angular speed while dwelling
+angular_velocity_midbody_w_roaming_abs_50th,median angular speed while roaming
+angular_velocity_midbody_w_sprinting_abs_50th,median angular speed while sprinting
+bounding_box_ratio_50th,median bounding box ratio
+bounding_box_ratio_w_dwelling_50th,median bounding box ratio while dwelling
+bounding_box_ratio_w_quiescence_50th,median bounding box ratio while quiescent
+bounding_box_ratio_w_roaming_50th,median bounding box ratio while roaming
+bounding_box_ratio_w_sprinting_50th,median bounding box ratio while sprinting
+curvature_midbody_w_dwelling_abs_50th,median curvature of midbody while dwelling
+curvature_midbody_w_quiescence_abs_50th,median curvature of midbody while quiescent
+curvature_midbody_w_roaming_abs_50th,median curvature of midbody while roaming
+curvature_midbody_w_sprinting_abs_50th,median curvature of midbody while sprinting
+fraction_dwelling,dwelling time %
+fraction_motion_mode_backward_w_dwelling,reversal time % while dwelling
+fraction_motion_mode_backward_w_roaming,reversal time % while roaming
+fraction_motion_mode_backward_w_sprinting,reversal time % while sprinting
+fraction_quiescence,quiescence time %
+fraction_roaming,roaming time %
+fraction_sprinting,sprinting time %
+fraction_turn_intra_w_dwelling,turn time % while dwelling
+fraction_turn_intra_w_roaming,turn time % while roaming
+fraction_turn_intra_w_sprinting,turn time % while sprinting
+length_90th,length
+motion_mode_backward_fraction,reversal time %
+n_skeletons,number of skeletons
+path_straightness_midbody_5s_50th,median path straightness over 5s
+path_straightness_midbody_5s_w_dwelling_50th,median path straightness over 5s while dwelling
+path_straightness_midbody_5s_w_roaming_50th,median path straightness over 5s while roaming
+path_straightness_midbody_5s_w_sprinting_50th,median path straightness over 5s while sprinting
+speed_midbody_w_dwelling_50th,median speed while dwelling
+speed_midbody_w_roaming_50th,median speed while roaming
+speed_midbody_w_sprinting_50th,median speed while sprinting
+turn_intra_fraction,turn time % 

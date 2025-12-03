@@ -5,6 +5,7 @@
 """
 # %%
 import os
+import re
 import glob
 import datetime
 import tables
@@ -20,7 +21,7 @@ from tierpsy.summary.process_ow import ow_plate_summary, \
 from tierpsy.summary.process_tierpsy import tierpsy_plate_summary, \
     tierpsy_trajectories_summary, tierpsy_plate_summary_augmented
 from tierpsy.summary.helper import \
-    get_featsum_headers, get_fnamesum_headers, shorten_feature_names
+    get_featsum_headers, get_fnamesum_headers, shorten_feature_names, load_column_mapping, convert_fraction_to_percentage
 from tierpsy.summary.parsers import \
     time_windows_parser, filter_args_parser, select_parser
 
@@ -289,6 +290,31 @@ def calculate_summaries(
                 _displayProgress(ifile)
                 ifile += 1
 
+    # --- Rename columns in featsum files if mapping is provided ---
+    if select_feat == 'tierpsy_level_1':
+        mapping_file_name = 'feature_summary_dict_lvl1.csv'
+    else:
+        mapping_file_name = 'feature_summary_dict.csv'
+    collect_dir = os.path.dirname(os.path.abspath(__file__))
+    mapping_csv_abs = os.path.join(collect_dir, '..', 'extras', mapping_file_name)
+    mapping_csv_abs = os.path.abspath(mapping_csv_abs)
+    mapping_dict = load_column_mapping(mapping_csv_abs)
+    for f2 in featsum_files:
+        df = pd.read_csv(f2, comment='#', index_col=None)
+        df.rename(columns=mapping_dict, inplace=True)
+        # preserve comments at the top
+        with open(f2, 'r') as f:
+            lines = f.readlines()
+        comments = [line for line in lines if line.startswith('#')]
+        
+
+    # --- Convert fractions to percentages in featsum files ---
+        df = convert_fraction_to_percentage(df)
+        with open(f2, 'w') as f:
+            for line in comments:
+                f.write(line)
+            df.to_csv(f, index=False)
+    # --- End of renaming and conversion ---
     out = '****************************'
     out += '\nFINISHED. Created Files:'
     for f1, f2 in zip(fnames_files, featsum_files):
