@@ -451,6 +451,7 @@ class GetMaskParams_GUI(ParamsGUI):
                 if image.ndim == 3:
                     image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
+                image = np.ascontiguousarray(image)
                 self.Ibuff[ii] = image
 
                 tot += 1
