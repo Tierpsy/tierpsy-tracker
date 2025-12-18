@@ -155,7 +155,7 @@ def _flag_regions(vec, central_th, extrema_th, smooth_window, min_frame_range):
 
     return flag_modes
 
-def classify_worm_states(smoothed_speeds: np.ndarray, thresholds: np.ndarray = np.array([5, 30, 100])) -> np.ndarray:
+def classify_worm_states(smoothed_speeds: np.ndarray, thresholds: np.ndarray = np.array([5, 25, 100])) -> np.ndarray:
     """
     Classify the worm's behaviour into one of four states:
     - 0: Quiescence
