@@ -178,6 +178,33 @@ def classify_worm_states(smoothed_speeds: np.ndarray, thresholds: np.ndarray = n
     - np.ndarray of shape (n_frames,), where each value is an integer
       representing the worm's state for that frame.
     """
+    # ********************************
+    # temporarily import parameters
+
+    import yaml
+
+    # load paramerters combination
+    import os
+    events_path = os.path.abspath(__file__)
+    
+    # find parameters_combo.yaml in the extras directory
+    extras_dir = events_path.replace('/features/tierpsy_features/events.py', '/extras')
+    param_combo_file_name = 'parameters_combo.yaml'
+    PARAM_COMBO_FILE = os.path.join(extras_dir, param_combo_file_name)
+
+    with open(PARAM_COMBO_FILE, 'r') as f:
+        params = yaml.safe_load(f)
+
+    dwelling_threshold = params['dwelling_threshold']
+    roaming_threshold = params['roaming_threshold']
+    sprinting_threshold = params['sprinting_threshold']
+    thresholds = np.array([dwelling_threshold, roaming_threshold, sprinting_threshold])
+
+    # end of temporary import
+    # ********************************
+
+
+    
     # Validate input thresholds
     if len(thresholds) != 3:
         raise ValueError("Thresholds array must contain exactly 3 elements.")

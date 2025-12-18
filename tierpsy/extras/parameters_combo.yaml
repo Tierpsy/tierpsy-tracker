@@ -1,0 +1,6 @@
+angular_velocity_threshold: 0.3
+delta_frames: 75
+dwelling_threshold: 5
+roaming_threshold: 25
+smoothing_window_sec: 1.2
+sprinting_threshold: 100
