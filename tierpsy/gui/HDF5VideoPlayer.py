@@ -572,8 +572,14 @@ class HDF5VideoPlayerGUI(SimplePlayer):
 
 
     def closeEvent(self, event):
-        if self.fid is not None:
-            self.fid.close()
+        # Some GUIs that reuse this class may not have `fid` attribute.
+        fid = getattr(self, 'fid', None)
+        if fid is not None:
+            try:
+                fid.close()
+            except Exception:
+                # ignore any error closing file to avoid crashing on exit
+                pass
         super(HDF5VideoPlayerGUI, self).closeEvent(event)
 
 def tierpsy_gui_simple():

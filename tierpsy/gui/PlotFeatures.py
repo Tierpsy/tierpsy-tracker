@@ -166,14 +166,17 @@ class PlotFeatures(QDialog):
         self._ax.set_title('All Trajectories')
 
 
-        self.timeseries_data['timestamp_s'] = self.timeseries_data['timestamp']/self.fps
+        # compute derived time columns in one operation to avoid DataFrame fragmentation
+        ts = self.timeseries_data['timestamp'] / self.fps
+        tb = (ts / self.ts_bin).round()
+        # assign both columns at once and rebind the DataFrame (avoids many small inserts)
+        self.timeseries_data = self.timeseries_data.assign(timestamp_s=ts, timestamp_binned=tb)
         #self._ax.plot(feat_val['timestamp'], feat_val[feature])
         for _, worm_data in self.traj_worm_index_grouped:
             feat_val = self.timeseries_data.loc[worm_data.index]
 
             self._ax.plot(feat_val['timestamp_s'], feat_val[feature], alpha=0.4)
 
-        self.timeseries_data['timestamp_binned'] = round(self.timeseries_data['timestamp_s']/self.ts_bin)
 
         agg_data = self.timeseries_data[['timestamp_binned', feature]].groupby('timestamp_binned').agg('median')[feature]
         xx = agg_data.index*self.ts_bin 
