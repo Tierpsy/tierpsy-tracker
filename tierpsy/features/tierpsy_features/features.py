@@ -55,6 +55,7 @@ def get_timeseries_features(skeletons,
                             timestamp = None,
                             food_cnt = None,
                             is_smooth_food_cnt = False,
+                            worm_blob_data = None
                             ):
     
     '''
@@ -104,7 +105,7 @@ def get_timeseries_features(skeletons,
     
     features_df['timestamp'] = timestamp
     
-    events_df = get_events(features_df, fps)
+    events_df = get_events(features_df, fps, worm_blob_data=worm_blob_data, skeletons=skeletons)
     
     dd = [x for x in events_df if x in event_columns]
     features_df = features_df.join(events_df[dd])

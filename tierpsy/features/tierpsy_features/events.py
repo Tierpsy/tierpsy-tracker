@@ -68,24 +68,184 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     import numpy as np
     import pandas as pd
 
+    # ********************************
+    # temporarily import parameters
+    import yaml
+
+    # find the absolute path of the extras directory in the tierpsy-tracker package based on the location of this file
+    import os
+    events_path = os.path.abspath(__file__)
+    
+    # find parameters_combo.yaml in the extras directory
+    extras_dir = events_path.replace('/features/tierpsy_features/events.py', '/extras')
+    param_combo_file_name = 'parameters_combo.yaml'
+    PARAM_COMBO_FILE = os.path.join(extras_dir, param_combo_file_name)
+    with open(PARAM_COMBO_FILE, 'r') as f:
+        params = yaml.safe_load(f)
+
+    ang_vel_thresh = params['angular_velocity_threshold']
+    # smooth_window_sec = params['smoothing_window_sec']
+    delta_frames = params['delta_frames']
+    # End of temporary import
+    # ********************************
+
     # Ensure required columns are present
     if 'angular_velocity' not in worm_data:
         raise ValueError("worm_data must contain 'angular_velocity' column.")
 
-    # interpolate over NaNs and smooth angular velocity
-    smooth_window_frames = int(smooth_window_sec * fps)
-    if smooth_window_frames % 2 == 0:
-        smooth_window_frames += 1  # Ensure odd window size for centered smoothing
-    interpolated_angular_velocity = fill_nans_1D(worm_data['angular_velocity'].values,max_gap=3*fps)
-    ang_velocity = pd.Series(interpolated_angular_velocity).rolling(
-        window=smooth_window_frames, center=True, min_periods=1).mean().values
+    # smooth_window_frames = int(smooth_window_sec * fps)
+    # if smooth_window_frames % 2 == 0:
+    #     smooth_window_frames += 1  # Ensure odd window size for centered smoothing
+    
+    # calculate angular velocity from skeletons
+    if skeletons is not None:
+        from tierpsy.features.tierpsy_features.velocities import get_velocity
+        partition = 'body'
+        signed_speed, angular_velocity, centered_skeleton = get_velocity(skeletons, partition, delta_frames, fps)
 
-    # Use absolute value of angular velocity
-    ang_velocity = np.abs(ang_velocity)
+    # interpolate over NaNs and use absolute value of angular velocity
+    interpolated_angular_velocity = fill_nans_1D(angular_velocity,max_gap=10*fps)
+    ang_velocity = np.abs(interpolated_angular_velocity)
 
-    # Detect turns based on threshold
-    turn_vector = ang_velocity > ang_vel_thresh
+    # Detect potential turns based on threshold
+    potential_turn_vector = ang_velocity > ang_vel_thresh
+    
+    # apply a filter on blob movement based on coordinates change (coord_x, coord_y) a few frames before and after the turn
+    # if worm_blob_data is not None and 'coord_x' in worm_blob_data and 'coord_y' in worm_blob_data:
+    #     coord_x = worm_blob_data['coord_x'].values
+    #     coord_y = worm_blob_data['coord_y'].values
+        
+    #     # Calculate rolling window size (e.g., 1 seconds before and after the turn)
+    #     rolling_window_size = int(fps * 1)
+    #     if rolling_window_size % 2 == 0:
+    #         rolling_window_size += 1
+        
+    #     # Calculate cumulative distance traveled (sum of frame-to-frame distances)
+    #     # dx = np.diff(coord_x, prepend=coord_x[0])
+    #     # dy = np.diff(coord_y, prepend=coord_y[0])
+    #     # frame_distances = np.sqrt(dx**2 + dy**2)
+    #     # cumulative_distance = pd.Series(frame_distances).rolling(
+    #     #     window=rolling_window_size, center=True, min_periods=1).sum().values
+        
+    #     # Calculate net displacement (straight-line distance from start to end of window)
+    #     net_displacement = pd.Series(np.sqrt(
+    #         (coord_x - np.roll(coord_x, rolling_window_size//2))**2 + 
+    #         (coord_y - np.roll(coord_y, rolling_window_size//2))**2
+    #     )).rolling(window=rolling_window_size, center=True, min_periods=1).max().values
+        
+    #     # Movement is valid only if net displacement is equal or larger than a fraction of worm length
+    #     worm_length = worm_data['length'].median()
+    #     movement_ratio_threshold = 0.2  # e.g., net displacement should be at least 30% of worm length
+    #     movement_mask = net_displacement >= (movement_ratio_threshold * worm_length)
+        
+    #     potential_turn_vector = potential_turn_vector & movement_mask
 
+
+    
+    # apply a minimum "blob_compactness" (from worm_blob_data) filter making sure there's at least one frame with high compactness in the surrounding frames
+    blob_compactness = worm_blob_data['compactness'] if worm_blob_data is not None else None
+    if blob_compactness is not None:
+        min_compactness = 0.4
+        compactness_mask = blob_compactness > min_compactness
+        # create a rolling window to ensure at least one frame in the surrounding frames has high compactness
+        rolling_window_size = int(fps * 2)
+        if rolling_window_size % 2 == 0:
+            rolling_window_size += 1  # Ensure odd window size
+        compactness_mask_rolled = pd.Series(compactness_mask).rolling(
+            window=rolling_window_size, center=True, min_periods=1).max().values.astype(bool)
+        # Update potential_turn_vector to only keep turns where compactness condition is met
+        turn_vector = potential_turn_vector & compactness_mask_rolled
+    
+    # blob_compactness = worm_blob_data['compactness'] if worm_blob_data is not None and 'compactness' in worm_blob_data else None
+    # if blob_compactness is not None:
+    #     # detect local peaks and sudden changes within 1-second windows
+    #     window_size = int(fps * 1)  # 1 second window
+    #     if window_size % 2 == 0:
+    #         window_size += 1
+        
+    #     bc = pd.Series(blob_compactness).fillna(method='ffill').fillna(method='bfill')
+
+    #     # 1) detect local peaks within each window
+    #     peak_mask = np.zeros(len(bc), dtype=bool)
+    #     for i in range(len(bc)):
+    #         start = max(0, i - window_size // 2)
+    #         end = min(len(bc), i + window_size // 2 + 1)
+    #         window_vals = bc.iloc[start:end].values
+    #         # if current frame is max in window, mark as peak
+    #         if bc.iloc[i] == window_vals.max() and window_vals.max() > 0:
+    #             peak_mask[i] = True
+        
+    #     # 2) detect sudden changes (>20% difference between consecutive frames)
+    #     sudden_change_mask = np.zeros(len(bc), dtype=bool)
+    #     for i in range(len(bc) - int(fps)):
+    #         # compare frame i to frame i+1sec
+    #         future_idx = min(i + int(fps), len(bc) - 1)
+    #         if bc.iloc[i] > 0:
+    #             pct_change = np.abs(bc.iloc[future_idx] - bc.iloc[i]) / bc.iloc[i]
+    #             if pct_change >= 0.25:
+    #                 sudden_change_mask[i] = True
+    #     # remove the peaks lower than a minimum compactness threshold
+    #     min_compactness = 0.35
+    #     peak_mask = peak_mask & (bc.values >= min_compactness)
+
+    #     # combine peaks and sudden changes
+    #     compactness_mask = peak_mask & sudden_change_mask
+        
+    #     # create a rolling window to ensure at least one qualifying frame nearby
+    #     rolling_window_size = int(fps * 1.5)  # 1.5 seconds
+    #     if rolling_window_size % 2 == 0:
+    #         rolling_window_size += 1
+    #     compactness_mask_rolled = pd.Series(compactness_mask).rolling(
+    #         window=rolling_window_size, center=True, min_periods=1).max().values.astype(bool)
+        
+    #     # Update potential_turn_vector to only keep turns where compactness condition is met
+    #     turn_vector = potential_turn_vector & compactness_mask_rolled
+
+    # Temporarily export blob compactness, angular velocity, turn_vector, net displacement, movement_mask for each worm-timestamp where there's a potential turn
+    # tabale structure: timestamp (2*fps before and after the turn), worm_index-turn_timestamp, angular_velocity, blob_compactness, net_displacement, movement_mask, turn_vector
+    # create per-worm turn table (may be empty)
+    # turn_frames = np.flatnonzero(turn_vector)
+
+    # # for adjuscent turn frames, keep only the central one
+    # if turn_frames.size > 0:
+    #     min_separation = int(fps * 1)  # 1 second separation
+    #     clusters = []
+    #     current_cluster = [turn_frames[0]]
+    #     for prev, cur in zip(turn_frames[:-1], turn_frames[1:]):
+    #         if cur - prev < min_separation:
+    #             current_cluster.append(cur)
+    #         else:
+    #             clusters.append(current_cluster)
+    #             current_cluster = [cur]
+    #     clusters.append(current_cluster)
+
+    #     # pick central (median) frame for each cluster
+    #     filtered_turn_frames = [int(np.median(cluster)) for cluster in clusters]
+    #     turn_frames = np.array(filtered_turn_frames, dtype=int)
+
+    # df_turn_table = None
+    # if turn_frames.size > 0:
+    #     df_turn_table = export_turn_features_table(
+    #         worm_data=worm_data,
+    #         worm_blob_data=worm_blob_data,
+    #         fps=fps,
+    #         turn_frames=turn_frames,
+    #         window_s=2,
+    #         pad=True,
+    #         require_complete=False,
+    #         worm_index=None
+    #     )
+    # export to df_turn_table_{worm_index} to a csv file for debugging
+    # find worm_index from worm_blob_data
+    # worm_index = worm_blob_data['worm_index_joined'].iloc[0]
+    # if df_turn_table is not None:
+    #     # export all in the /Users/hkhabbaz/Documents/Research/projects/tierpsy/Development/features folder
+    #     parent_folder = "/Users/hkhabbaz/Documents/Research/projects/tierpsy/Development/features/samples/SyngentaStrainScreening/turn_sample_ubuntu/Results/turn_data"
+    #     debug_csv_file = os.path.join(parent_folder, f"df_turn_table_{worm_index}.csv")
+    #     df_turn_table.to_csv(debug_csv_file, index=False)
+        # print(f"Turn features table exported to {debug_csv_file} for worm_index {worm_index}")
+
+    
     return turn_vector
 
 #%%
@@ -291,7 +451,7 @@ def get_event_durations_w(events_df, fps):
     return event_durations_df
 
 
-def get_events(df, fps, worm_length = None, _is_debug=False):
+def get_events(df, fps, worm_length = None, _is_debug=False, worm_blob_data = None, skeletons = None):
 
     #initialize data
     smooth_window_s = 0.5
@@ -342,7 +502,7 @@ def get_events(df, fps, worm_length = None, _is_debug=False):
 
     #TURN EVENT
     if set(('head_tail_distance', 'major_axis', 'angular_velocity')).issubset(set(df.columns)):
-        turn_vector = _find_turns(df, fps)
+        turn_vector = _find_turns(df, fps, worm_blob_data=worm_blob_data, skeletons=skeletons)
         events_df['turn'] = turn_vector.astype(np.float32)
 
     # BEHAVIOURAL STATES

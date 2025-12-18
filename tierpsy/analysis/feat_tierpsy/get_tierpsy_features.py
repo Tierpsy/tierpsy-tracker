@@ -43,7 +43,13 @@ def save_timeseries_feats_table(
 
     with pd.HDFStore(features_file, 'r') as fid:
         trajectories_data = fid['/trajectories_data']
-
+        blob_features = fid['/blob_features'] if '/blob_features' in fid else None
+    # add worm indices and timestamp columns from trajectories data to blob features to use in grouping
+    if blob_features is not None:
+        blob_features_with_idx = pd.concat([blob_features,
+                                            trajectories_data[['worm_index_joined', 'timestamp_raw']]], axis=1)
+        
+    blob_features_g = blob_features_with_idx.groupby('worm_index_joined')
     trajectories_data_g = trajectories_data.groupby('worm_index_joined')
     progress_timer = TimeCounter('')
     base_name = get_base_name(features_file)
@@ -86,6 +92,11 @@ def save_timeseries_feats_table(
         ventral_side = read_ventral_side(features_file)
 
         for ind_n, (worm_index, worm_data) in enumerate(trajectories_data_g):
+            # extract the corresponding blob features
+            if blob_features is not None:
+                worm_blob_data = blob_features_g.get_group(worm_index)
+            else:
+                worm_blob_data = None
 
             skel_id = worm_data['skeleton_id'].values
 
@@ -119,7 +130,8 @@ def save_timeseries_feats_table(
                                            food_cnt = food_cnt,
                                            fps = fps,
                                            ventral_side = ventral_side,
-                                           derivate_delta_time = derivate_delta_time
+                                           derivate_delta_time = derivate_delta_time,
+                                           worm_blob_data = worm_blob_data
                                            )
             #save timeseries features data
             feats = feats.astype(np.float32)
