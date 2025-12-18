@@ -341,7 +341,7 @@ class FOVMultiWellsSplitter(object):
                   (0.75 * guess_offset, 1.25 * guess_offset),
                   (0.95 * guess_spacing, 1.05 * guess_spacing)]
         result = scipy.optimize.differential_evolution(
-            fun_to_minimise, bounds, polish=True)
+            fun_to_minimise, bounds, polish=True, seed = 42)
         # extract output parameters for spacing grid
         x_offset, y_offset, spacing = result.x.copy()
 
