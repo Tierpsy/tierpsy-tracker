@@ -51,7 +51,7 @@ def _get_pulses_indexes(light_on, min_window_size=0, is_pad = True):
     return turn_on[good], turn_off[good]
 
 #%%
-def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
+def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2, worm_blob_data = None, skeletons = None):
     """
     This function detects turns based on the angular velocity of the worm's midbody.
     It smooths the angular velocity and flags frames where the absolute value exceeds a threshold.
