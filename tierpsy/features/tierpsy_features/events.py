@@ -86,6 +86,8 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     ang_vel_thresh = params['angular_velocity_threshold']
     # smooth_window_sec = params['smoothing_window_sec']
     delta_frames = params['delta_frames']
+    min_compactness = params['min_compactness']
+    compactness_window = params['compactness_window']
     # End of temporary import
     # ********************************
 
@@ -145,10 +147,9 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2):
     # apply a minimum "blob_compactness" (from worm_blob_data) filter making sure there's at least one frame with high compactness in the surrounding frames
     blob_compactness = worm_blob_data['compactness'] if worm_blob_data is not None else None
     if blob_compactness is not None:
-        min_compactness = 0.4
         compactness_mask = blob_compactness > min_compactness
         # create a rolling window to ensure at least one frame in the surrounding frames has high compactness
-        rolling_window_size = int(fps * 2)
+        rolling_window_size = int(fps * compactness_window)
         if rolling_window_size % 2 == 0:
             rolling_window_size += 1  # Ensure odd window size
         compactness_mask_rolled = pd.Series(compactness_mask).rolling(
