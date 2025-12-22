@@ -70,7 +70,7 @@ def main(args):
         'sprinting_threshold': [100],#[100, 120, 140, 160, 180, 200],
         'angular_velocity_threshold': [0.3],#[0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         #'smoothing_window_sec': [1.2],
-        'delta_frames': [75], #[ 50, 75, 125]
+        'delta': [3], # in seconds now
         'min_compactness':[0.4], #[0.3, 0.4, 0.5]
         'compactness_window':[2] 
     }

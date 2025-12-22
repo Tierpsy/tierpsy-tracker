@@ -85,7 +85,7 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2, 
 
     ang_vel_thresh = params['angular_velocity_threshold']
     # smooth_window_sec = params['smoothing_window_sec']
-    delta_frames = params['delta_frames']
+    delta = params['delta']
     min_compactness = params['min_compactness']
     compactness_window = params['compactness_window']
     # End of temporary import
@@ -103,6 +103,7 @@ def _find_turns(worm_data, fps, ang_vel_thresh = 0.85, smooth_window_sec = 1.2, 
     if skeletons is not None:
         from tierpsy.features.tierpsy_features.velocities import get_velocity
         partition = 'body'
+        delta_frames = int(delta*fps)
         signed_speed, angular_velocity, centered_skeleton = get_velocity(skeletons, partition, delta_frames, fps)
 
     # interpolate over NaNs and use absolute value of angular velocity
