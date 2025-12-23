@@ -333,9 +333,24 @@ def _calculate_summaries_one_video(
     fname = row['filename']
     file_id = row['file_id']
 
-    # summary_func is a partial function with all parameters already passed
-    # this is the bit that actually does the calculations
-    summaries_per_win = summary_func(fname)
+    try:
+        # summary_func is a partial function with all parameters already passed
+        # this is the bit that actually does the calculations
+        summaries_per_win = summary_func(fname)
+    except IndexError as e:
+        # Handle mismatched data lengths (e.g., blob_features vs trajectories)
+        print_flush(f"WARNING: Skipping file {fname} due to data mismatch: {str(e)}")
+        return
+    except (AttributeError, IOError, KeyError,
+            tables.exceptions.HDF5ExtError,
+            tables.exceptions.NoSuchNodeError) as e:
+        # Handle other known errors
+        print_flush(f"WARNING: Skipping file {fname} due to error: {str(e)}")
+        return
+    except Exception as e:
+        # Catch any other unexpected errors to prevent process crash
+        print_flush(f"WARNING: Skipping file {fname} due to unexpected error: {str(e)}")
+        return
 
     # loop on windows to write to output
     for iwin, df in enumerate(summaries_per_win):
