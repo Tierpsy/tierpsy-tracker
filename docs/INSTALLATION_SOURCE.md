@@ -62,60 +62,17 @@ pip install imgstore
 ```
 
 #### 2.4. Install Tierpsy
-gcc version 11 is required for this step. You can check if you have gcc version 11 or not with "gcc-11 --version" in the command-line. if you got a 'command not found: gcc-11', it's not installed skip here and check part "3. Installing GCC".
+Clang is required for this step. You can check if you have Clang installed with "clang --version" in the command-line. If it is installed, you will see output showing the Clang version details. If not, you can install it with
+```bash
+xcode-select --install
+```
 
 ```bash
-CC=gcc-11 pip install -e .
-```
-### 3. Installing GCC
-#### 3.1. Install Homebrew
-Check if you have homebrew, type:
-
-```bash
-which brew
-```
-If it returns a path, Homebrew is already installed and continue from step 3.2.
-If you don't have Homebrew installed, install it by running this command in the terminal:
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+export CFLAGS="-std=gnu89"
+CC=clang pip install -e .
 ```
 
-To verify that Homebrew is installed, type:
-
-```bash
-which brew
-```
-You might need to run suggested displayed commands under the section "Next Steps" in the terminal window to add Homebrew to path.  
-Alternatively, you can run the commands below in your terminal after replacing [username] with your username to add Homebrew to your PATH:
-```bash
-echo >> /Users/[username]/.zprofile
-
-echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >› /Users/[username]/.zprofile
-
-eval "$(/opt/homebrew/bin/brew shellenv)"
-```
-
-To verify that Homebrew is installed, type:
-
-```bash 
-which brew
-```
-
-If it returns a path, Homebrew is installed correctly.
-
-#### 3.2. Install gcc
-Next, install gcc 11:
-
-```bash
-brew install gcc@11 
-```
-
-#### 3.3. Install Tierpsy 
-```bash
-CC=gcc-11 pip install -e .
-```
-
-#### 4. Run Tierpsy
+#### 3. Run Tierpsy
 Activate environment if it's not already activated and run tierpsy_gui
 ```bash
 conda activate tierpsy
