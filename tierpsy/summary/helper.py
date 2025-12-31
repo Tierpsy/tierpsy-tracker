@@ -122,9 +122,34 @@ def read_package_version(fname,
 
     return version
 
-def get_featsum_headers(fnamesum_fname):
+def get_featsum_headers(fnamesum_fname, filter_params=None):
 
     header = ','.join(['# FILENAMES SUMMARY FILE', fnamesum_fname]) + '\n'
+    if filter_params is not None:
+        if filter_params['min_traj_length'] is not None:
+            header += ','.join(
+                ['# MIN TRAJECTORY LENGTH',
+                 str(filter_params['min_traj_length']),
+                 str(filter_params['time_units'])]) + '\n'
+        if filter_params['min_distance_traveled'] is not None:
+            header += ','.join(
+                ['# MIN DISTANCE TRAVELED',
+                 str(filter_params['min_distance_traveled']),
+                 str(filter_params['distance_units'])]) + '\n'
+        if filter_params['min_thresholds'][0] is not None or \
+            filter_params['max_thresholds'][0] is not None:
+                header += ','.join(
+                    ['# MIN/MAX WORM LENGTH',
+                     str(filter_params['min_thresholds'][0]),
+                     str(filter_params['max_thresholds'][0]),
+                     str(filter_params['distance_units'])]) + '\n'
+        if filter_params['min_thresholds'][1] is not None or \
+            filter_params['max_thresholds'][1] is not None:
+                header += ','.join(
+                    ['# MIN/MAX WORM WIDTH',
+                     str(filter_params['min_thresholds'][1]),
+                     str(filter_params['max_thresholds'][1]),
+                     str(filter_params['distance_units'])]) + '\n'
 
     return header
 

@@ -233,7 +233,7 @@ def calculate_summaries(
             f2, feature_type, summary_type, iwin, time_windows_ints[iwin],
             time_units, len(time_windows_ints), select_feat, filter_params,
             fold_args, df_files.columns.to_list())
-        featsum_headers = get_featsum_headers(f1)
+        featsum_headers = get_featsum_headers(f1, filter_params=filter_params)
 
         with open(f1, 'w') as fid:
             fid.write(fnamesum_headers)
