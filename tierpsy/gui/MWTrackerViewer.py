@@ -97,7 +97,7 @@ class WellsDrawer(TrackerViewerAuxGUI):
             painter.begin(image)
             pen = QPen()
             pen.setWidth(self.penwidth)
-            painter.setFont(QFont('Decorative', self.fontsize))
+            painter.setFont(QFont('Arial', self.fontsize))
             # loop on wells
             for _, well in self.fovsplitter.wells.iterrows():
                 # update color every time
@@ -820,7 +820,7 @@ class MarkersDrawer(FeatureReaderBase):
         pen.setColor(label_color)
         pen.setWidth(self.penwidth)
         painter.setPen(pen)
-        painter.setFont(QFont('Decorative', self.fontsize))
+        painter.setFont(QFont('Arial', self.fontsize))
 
         painter.drawText(x, y, str(worm_index))
 
