@@ -1,6 +1,7 @@
 angular_velocity_threshold: 0.3
-delta_frames: 75
+compactness_window: 2
+delta: 3
 dwelling_threshold: 5
+min_compactness: 0.4
 roaming_threshold: 25
-smoothing_window_sec: 1.2
 sprinting_threshold: 100
