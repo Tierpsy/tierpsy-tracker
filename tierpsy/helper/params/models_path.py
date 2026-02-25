@@ -8,7 +8,7 @@ def get_model_filter_worms(p_dict):
     which_model = p_dict['nn_filter_to_use']
     if which_model != 'custom':
         if p_dict['path_to_custom_pytorch_model'] != '':
-            warnings.warm('A path to a custom model wass provided, '
+            warnings.warn('A path to a custom model wass provided, '
                           + f'but "nn_filter_to_use" was set to {which_model}.'
                           + ' The custom path will be ignored.')
 
@@ -21,9 +21,16 @@ def get_model_filter_worms(p_dict):
     elif which_model == 'custom':
         model_filter_worms = p_dict['path_to_custom_pytorch_model']
         if model_filter_worms == '':
-            warnings.warn('The path to the custom pytorch model to filter '
-                          + 'spurious particles was not given. '
-                          + 'This step will not be done.')
+            raise ValueError(
+                'The path to the custom pytorch model to filter spurious '
+                'particles was not given. Set "path_to_custom_pytorch_model" '
+                'or select a different "nn_filter_to_use".'
+            )
+        if not os.path.exists(model_filter_worms):
+            raise FileNotFoundError(
+                'The custom pytorch model file to filter spurious particles '
+                f'was not found: {model_filter_worms}'
+            )
     elif which_model == 'none':
         model_filter_worms = ''
     else:
