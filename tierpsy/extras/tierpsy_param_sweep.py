@@ -45,7 +45,7 @@ path = os.path.abspath(__file__)
 processLocal_path = path.replace('extras/tierpsy_param_sweep.py', 'processing/ProcessLocal.py')
 
 def find_hdf5_files(input_dir, extensions=(".hdf5")):
-    for dirpath, _, files in os.walk(input_dir):
+    for dirpath, _, files in os.walk(input_dir, followlinks=True):
         for f in files:
             if f.lower().endswith(extensions):
                 yield Path(dirpath) / f
