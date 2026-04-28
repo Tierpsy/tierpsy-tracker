@@ -12,7 +12,8 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QApplication, QFileDialog, QMessageBox, QWidget, QPushButton)
 
-from tierpsy.gui.HDF5VideoPlayer import HDF5VideoPlayerGUI, LineEditDragDrop
+from tierpsy.gui.HDF5VideoPlayer import (
+    HDF5VideoPlayerGUI, LineEditDragDrop, _get_imgstore_metadata_file)
 from tierpsy.gui.TrackerViewerAux_ui import Ui_TrackerViewerAux
 from tierpsy.analysis.ske_create.getSkeletonsTables import getWormMask
 from tierpsy.analysis.ske_create.segWormPython.mainSegworm import getSkeleton
@@ -147,7 +148,7 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
             self.updateSkelAndVideoFileFromSkelName(selected_file)
 
         # already an opened masked videos file
-        elif self.vfilename in [matching_imgstorename, matching_maskname]:
+        elif _video_matches_results(self.vfilename, selected_file):
             # check if open video (could be raw video) matches results
             # print("results match opened video, load results")
             self.updateSkelFile(selected_file)
@@ -329,6 +330,13 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
         else:
             videos_dir, basename = os.path.split(vfilename)
             basename = os.path.splitext(basename)[0]
+            metadata_file = _get_imgstore_metadata_file(vfilename)
+            basenames = [basename]
+            if metadata_file is not None:
+                metadata_basename = os.path.splitext(
+                    os.path.basename(metadata_file))[0]
+                if metadata_basename not in basenames:
+                    basenames.append(metadata_basename)
 
             self.skeletons_file = ''
             self.results_dir = ''
@@ -340,12 +348,17 @@ class TrackerViewerAuxGUI(HDF5VideoPlayerGUI):
                             videos_dir, 'Results')]
 
             for new_dir in possible_dirs:
-                for ext_p in possible_ext:
-                    new_skel_file = os.path.join(new_dir, basename + ext_p)
-                    if os.path.exists(new_skel_file):
-                        self.skeletons_file = new_skel_file
-                        self.results_dir = new_dir
+                for basename in basenames:
+                    for ext_p in possible_ext:
+                        new_skel_file = os.path.join(new_dir, basename + ext_p)
+                        if os.path.exists(new_skel_file):
+                            self.skeletons_file = new_skel_file
+                            self.results_dir = new_dir
+                            break
+                    if self.skeletons_file:
                         break
+                if self.skeletons_file:
+                    break
 
         self.updateSkelFile(self.skeletons_file)
 
@@ -521,6 +534,20 @@ def results2imgstore(results_path):
     return maskedvideo_path
 
 
+def _video_matches_results(video_path, results_path):
+    matching_videos = {
+        os.path.abspath(results2maskedvideo(results_path)),
+        os.path.abspath(results2imgstore(results_path))
+        }
+
+    metadata_file = _get_imgstore_metadata_file(video_path)
+    candidate_videos = {os.path.abspath(video_path)}
+    if metadata_file is not None:
+        candidate_videos.add(os.path.abspath(metadata_file))
+
+    return bool(candidate_videos & matching_videos)
+
+
 def test_results2maskedvideo():
     assert results2maskedvideo('/evgeny/Results/20190808/Results/metadata_featuresN.hdf5') == '/evgeny/Results/20190808/MaskedVideos/metadata.hdf5'
     assert results2maskedvideo('/evgeny/Results/20190808/metadata_featuresN.hdf5') == '/evgeny/MaskedVideos/20190808/metadata.hdf5'
@@ -535,4 +562,3 @@ if __name__ == '__main__':
     ui.show()
     sys.exit(app.exec_())
     # test_results2video()
-
