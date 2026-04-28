@@ -14,6 +14,74 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 
 
+RAW_VIDEO_EXTENSIONS = ('.mp4', '.avi', '.mjpg', '.mov', '.mpg', '.mpeg')
+
+
+class ReadVideoCaptureFrame():
+    def __init__(self, video_file):
+        import cv2
+
+        self.cv2 = cv2
+        self.vid = cv2.VideoCapture(video_file)
+        if not self.vid.isOpened():
+            raise OSError('Cannot open video file: {}'.format(video_file))
+
+        status, img = self.vid.read()
+        if not status:
+            self.vid.release()
+            raise OSError('Cannot read video file: {}'.format(video_file))
+
+        self.height = img.shape[0]
+        self.width = img.shape[1]
+        self.dtype = img.dtype
+        self.tot_frames = int(self.vid.get(cv2.CAP_PROP_FRAME_COUNT))
+        if self.tot_frames <= 0:
+            self.tot_frames = 1
+
+        self.vid.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+    def read_frame(self, frame_number):
+        self.vid.set(self.cv2.CAP_PROP_POS_FRAMES, frame_number)
+        status, img = self.vid.read()
+        if not status:
+            return 0, None
+
+        if img.ndim == 3:
+            img = self.cv2.cvtColor(img, self.cv2.COLOR_BGR2GRAY)
+
+        return 1, img
+
+    def release(self):
+        self.vid.release()
+
+
+def _is_raw_video_file(video_file):
+    return video_file.lower().endswith(RAW_VIDEO_EXTENSIONS)
+
+
+def _get_imgstore_metadata_file(video_file):
+    if video_file.lower().endswith('.yaml'):
+        return video_file
+
+    if _is_raw_video_file(video_file):
+        metadata_file = os.path.join(os.path.dirname(video_file), 'metadata.yaml')
+        if os.path.exists(metadata_file):
+            return metadata_file
+
+    return None
+
+
+def open_non_hdf5_video(video_file):
+    metadata_file = _get_imgstore_metadata_file(video_file)
+    if metadata_file is not None:
+        return readLoopBio(metadata_file)
+
+    if _is_raw_video_file(video_file):
+        return ReadVideoCaptureFrame(video_file)
+
+    return readLoopBio(video_file)
+
+
 def setChildrenFocusPolicy(obj, policy):
     # recursively change the focus policy of all the objects in the widgets
     def recursiveSetChildFocusPolicy(parentQWidget):
@@ -275,6 +343,7 @@ class HDF5VideoPlayerGUI(SimplePlayer):
         self.frame_img = None
         self.frame_qimg = None
         self.isimgstore = False
+        self.imgstore = None
 
         #default expected groups in the hdf5
         self.ui.comboBox_h5path.setItemText(0, "/mask")
@@ -315,7 +384,7 @@ class HDF5VideoPlayerGUI(SimplePlayer):
     def keyPressEvent(self, event):
         #HOT KEYS
 
-        if self.fid is None:
+        if (self.fid is None) and (self.isimgstore is False):
             # break no file open, nothing to do here
             return
 
@@ -412,7 +481,10 @@ class HDF5VideoPlayerGUI(SimplePlayer):
     # file dialog to the the hdf5 file
     def getVideoFile(self):
         vfilename, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Find HDF5 video file", self.videos_dir, "HDF5 files (*.hdf5);; All files (*)")
+            self,
+            "Find video file",
+            self.videos_dir,
+            "Video files (*.hdf5 *.yaml *.mp4 *.avi *.mjpg *.mov);; All files (*)")
 
         self.updateVideoFile(vfilename)
 
@@ -425,7 +497,13 @@ class HDF5VideoPlayerGUI(SimplePlayer):
             self.image_group = None
             self.isimgstore = False
 
-        if vfilename is None:
+        if self.imgstore is not None:
+            self.imgstore.release()
+            self.mainImage.cleanCanvas()
+            self.imgstore = None
+            self.isimgstore = False
+
+        if not vfilename:
             # cleanup completed, do nothing else
             return
 
@@ -465,13 +543,15 @@ class HDF5VideoPlayerGUI(SimplePlayer):
 
         else:
             try:
-                self.imgstore = readLoopBio(self.vfilename)
+                self.imgstore = open_non_hdf5_video(self.vfilename)
                 self.isimgstore = True
                 self.fid = None
                 self.image_group = None
-            except ValueError as EE:
+            except (ImportError, OSError, RuntimeError, ValueError) as EE:
                 self.fid = None
                 self.image_group = None
+                self.imgstore = None
+                self.isimgstore = False
                 print(EE)
                 QtWidgets.QMessageBox.critical(
                     self,
@@ -565,7 +645,7 @@ class HDF5VideoPlayerGUI(SimplePlayer):
         self.ui.lineEdit.setText(filename)
 
     def resizeEvent(self, event):
-        if self.fid is not None:
+        if (self.fid is not None) or (self.isimgstore is True):
             self.updateImage()
             self.mainImage.zoomFitInView()
 
@@ -574,6 +654,8 @@ class HDF5VideoPlayerGUI(SimplePlayer):
     def closeEvent(self, event):
         if self.fid is not None:
             self.fid.close()
+        if self.imgstore is not None:
+            self.imgstore.release()
         super(HDF5VideoPlayerGUI, self).closeEvent(event)
 
 def tierpsy_gui_simple():
