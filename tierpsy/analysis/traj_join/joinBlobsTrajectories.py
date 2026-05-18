@@ -312,7 +312,7 @@ def joinGapsTrajectoriesDF(plate_worms,
         tracks_data = df[[worm_index_type, 'frame_number']]
         tracks_data = tracks_data.groupby(worm_index_type)
         tracks_data = tracks_data.aggregate(
-            {'frame_number': [np.argmin, np.argmax, 'count']})
+            {'frame_number': ['idxmin', 'idxmax', 'count']})
     
         # filter data only to include trajectories larger than min_track_size
         tracks_data = tracks_data[
@@ -320,8 +320,8 @@ def joinGapsTrajectoriesDF(plate_worms,
         valid_indexes = tracks_data.index
     
         # select the corresponding first and last rows of each trajectory
-        first_rows = df.iloc[tracks_data['frame_number']['argmin'].values]
-        last_rows = df.iloc[tracks_data['frame_number']['argmax'].values]
+        first_rows = df.loc[tracks_data['frame_number']['idxmin'].values]
+        last_rows = df.loc[tracks_data['frame_number']['idxmax'].values]
         # let's use the particle id as index instead of the row number
         last_rows.index = tracks_data['frame_number'].index
         first_rows.index = tracks_data['frame_number'].index
@@ -353,11 +353,12 @@ def joinGapsTrajectoriesDF(plate_worms,
                         (possible_rows['coord_y'] -
                          last_rows['coord_y'][curr_index]) ** 2)
     
-            indmin = np.argmin(R)
+            indmin = int(np.argmin(R.values))
+            next_index = R.index[indmin]
             # only join trajectories that move at most one worm body
-            if R[indmin] <= last_rows['box_length'][curr_index]:
-                #print(curr_index, indmin)
-                join_frames.append((indmin, curr_index))
+            if R.iloc[indmin] <= last_rows.loc[curr_index, 'box_length']:
+                #print(curr_index, next_index)
+                join_frames.append((next_index, curr_index))
     
         relations_dict = dict(join_frames)
     
