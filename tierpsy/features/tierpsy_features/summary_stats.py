@@ -6,6 +6,8 @@ Created on Mon Oct  2 14:24:25 2017
 """
 
 
+from itertools import product
+
 from tierpsy.features.tierpsy_features.helper import get_n_worms_estimate, \
     get_delta_in_frames, add_derivatives, nanmedian_filter
 from tierpsy.features.tierpsy_features.events import get_event_stats, event_region_labels, event_columns
@@ -229,6 +231,60 @@ def _get_subdivided_features(timeseries_data, subdivision_dict):
     subdivided_df.index = timeseries_data.index
 
     return subdivided_df
+
+
+def _get_cross_subdivided_features(
+        timeseries_data, timeseries_cols, subdivision_values):
+    """Mask features by every intersection of two or more event groups.
+
+    ``_get_subdivided_features`` treats each event independently. This helper
+    is for summaries that need the intersection of events, such as speed while
+    a worm is both roaming and moving backward.
+
+    Parameters
+    ----------
+    timeseries_data : pandas.DataFrame
+        Timeseries features and event columns.
+    timeseries_cols : sequence of str
+        Numeric features to mask.
+    subdivision_values : mapping of str to sequence
+        Event columns and the event values to include. Mapping order defines
+        the order of labels in the generated feature names.
+    """
+    assert all(col in event_region_labels for col in subdivision_values)
+
+    valid_cols = [col for col in timeseries_cols if col in timeseries_data]
+    if not valid_cols or not subdivision_values:
+        return pd.DataFrame(index=timeseries_data.index)
+
+    subdivision_items = list(subdivision_values.items())
+    for event_col, values in subdivision_items:
+        if event_col not in timeseries_data:
+            return pd.DataFrame(index=timeseries_data.index)
+        valid_values = event_region_labels[event_col]
+        if not set(values).issubset(valid_values):
+            raise ValueError(
+                'Unknown values for {}: {}'.format(
+                    event_col, set(values) - set(valid_values)))
+
+    subdivided_data = {}
+    value_combinations = product(
+        *(values for _, values in subdivision_items))
+    for values in value_combinations:
+        mask = np.ones(len(timeseries_data), dtype=bool)
+        labels = []
+        for (event_col, _), value in zip(subdivision_items, values):
+            mask &= timeseries_data[event_col].values == value
+            labels.append(event_region_labels[event_col][value])
+
+        name_suffix = ''.join('_w_' + label for label in labels)
+        for feature_col in valid_cols:
+            feature_data = timeseries_data[feature_col].to_numpy(
+                dtype=float, copy=True)
+            feature_data[~mask] = np.nan
+            subdivided_data[feature_col + name_suffix] = feature_data
+
+    return pd.DataFrame(subdivided_data, index=timeseries_data.index)
 
 
 def process_blob_data(blob_features, derivate_delta_time, fps):
@@ -461,7 +517,42 @@ def get_summary_stats(timeseries_data,
         is_abs_ventral=True
     )
     exp_feats.append(feat_stats_m_subdiv_states)
-    
+
+    # Speed is signed in the timeseries. Add magnitude summaries within each
+    # behavioural state while retaining the existing signed summaries above.
+    speed_features = ['speed_midbody', 'speed_head', 'speed_tail']
+    feat_stats_abs_speed_subdiv_states = get_df_quantiles(
+        timeseries_data,
+        feats2check=speed_features,
+        feats2abs=speed_features,
+        feats2norm=[],
+        subdivision_dict={'behavioural_states': speed_features},
+        is_abs_ventral=True
+    )
+    exp_feats.append(feat_stats_abs_speed_subdiv_states)
+
+    # Direction-specific magnitude summaries use intersections rather than
+    # independent subdivisions. Paused frames remain represented in the
+    # overall state summaries above but are intentionally excluded here.
+    directional_speed_data = _get_cross_subdivided_features(
+        timeseries_data,
+        timeseries_cols=speed_features,
+        subdivision_values={
+            'behavioural_states': (1, 2, 3),
+            'motion_mode': (-1, 1),
+        }
+    )
+    feat_stats_abs_speed_subdiv_states_direction = get_df_quantiles(
+        directional_speed_data,
+        feats2check=directional_speed_data.columns.tolist(),
+        feats2abs=speed_features,
+        feats2norm=[],
+        subdivision_dict={},
+        is_remove_subdivided=False,
+        is_abs_ventral=True
+    )
+    exp_feats.append(feat_stats_abs_speed_subdiv_states_direction)
+
     # Calculation for event mode fractions in all behavioral states
     event_mode_subdiv_feats = ['motion_mode','turn']
     for event_type in event_mode_subdiv_feats:

@@ -242,31 +242,85 @@ path_straightness_midbody_5s_w_roaming_90th,maximum path straightness over 5s wh
 path_straightness_midbody_5s_w_sprinting_10th,minimum path straightness over 5s while sprinting
 path_straightness_midbody_5s_w_sprinting_50th,median path straightness over 5s while sprinting
 path_straightness_midbody_5s_w_sprinting_90th,maximum path straightness over 5s while sprinting
-speed_head_w_dwelling_10th,minimum speed of head while dwelling
-speed_head_w_dwelling_50th,median speed of head while dwelling
-speed_head_w_dwelling_90th,maximum speed of head while dwelling
-speed_head_w_roaming_10th,minimum speed of head while roaming
-speed_head_w_roaming_50th,median speed of head while roaming
-speed_head_w_roaming_90th,maximum speed of head while roaming
-speed_head_w_sprinting_10th,minimum speed of head while sprinting
-speed_head_w_sprinting_50th,median speed of head while sprinting
-speed_head_w_sprinting_90th,maximum speed of head while sprinting
-speed_midbody_w_dwelling_10th,minimum speed of midbody while dwelling
-speed_midbody_w_dwelling_50th,median speed of midbody while dwelling
-speed_midbody_w_dwelling_90th,maximum speed of midbody while dwelling
-speed_midbody_w_roaming_10th,minimum speed of midbody while roaming
-speed_midbody_w_roaming_50th,median speed of midbody while roaming
-speed_midbody_w_roaming_90th,maximum speed of midbody while roaming
-speed_midbody_w_sprinting_10th,minimum speed of midbody while sprinting
-speed_midbody_w_sprinting_50th,median speed of midbody while sprinting
-speed_midbody_w_sprinting_90th,maximum speed of midbody while sprinting
-speed_tail_w_dwelling_10th,minimum speed of tail while dwelling
-speed_tail_w_dwelling_50th,median speed of tail while dwelling
-speed_tail_w_dwelling_90th,maximum speed of tail while dwelling
-speed_tail_w_roaming_10th,minimum speed of tail while roaming
-speed_tail_w_roaming_50th,median speed of tail while roaming
-speed_tail_w_roaming_90th,maximum speed of tail while roaming
-speed_tail_w_sprinting_10th,minimum speed of tail while sprinting
-speed_tail_w_sprinting_50th,median speed of tail while sprinting
-speed_tail_w_sprinting_90th,maximum speed of tail while sprinting
+speed_head_w_dwelling_abs_10th,minimum speed of head while dwelling
+speed_head_w_dwelling_abs_50th,median speed of head while dwelling
+speed_head_w_dwelling_abs_90th,maximum speed of head while dwelling
+speed_head_w_roaming_abs_10th,minimum speed of head while roaming
+speed_head_w_roaming_abs_50th,median speed of head while roaming
+speed_head_w_roaming_abs_90th,maximum speed of head while roaming
+speed_head_w_sprinting_abs_10th,minimum speed of head while sprinting
+speed_head_w_sprinting_abs_50th,median speed of head while sprinting
+speed_head_w_sprinting_abs_90th,maximum speed of head while sprinting
+speed_midbody_w_dwelling_abs_10th,minimum speed of midbody while dwelling
+speed_midbody_w_dwelling_abs_50th,median speed of midbody while dwelling
+speed_midbody_w_dwelling_abs_90th,maximum speed of midbody while dwelling
+speed_midbody_w_roaming_abs_10th,minimum speed of midbody while roaming
+speed_midbody_w_roaming_abs_50th,median speed of midbody while roaming
+speed_midbody_w_roaming_abs_90th,maximum speed of midbody while roaming
+speed_midbody_w_sprinting_abs_10th,minimum speed of midbody while sprinting
+speed_midbody_w_sprinting_abs_50th,median speed of midbody while sprinting
+speed_midbody_w_sprinting_abs_90th,maximum speed of midbody while sprinting
+speed_tail_w_dwelling_abs_10th,minimum speed of tail while dwelling
+speed_tail_w_dwelling_abs_50th,median speed of tail while dwelling
+speed_tail_w_dwelling_abs_90th,maximum speed of tail while dwelling
+speed_tail_w_roaming_abs_10th,minimum speed of tail while roaming
+speed_tail_w_roaming_abs_50th,median speed of tail while roaming
+speed_tail_w_roaming_abs_90th,maximum speed of tail while roaming
+speed_tail_w_sprinting_abs_10th,minimum speed of tail while sprinting
+speed_tail_w_sprinting_abs_50th,median speed of tail while sprinting
+speed_tail_w_sprinting_abs_90th,maximum speed of tail while sprinting
+speed_head_w_dwelling_w_forward_abs_10th,minimum speed of head while dwelling forward
+speed_head_w_dwelling_w_forward_abs_50th,median speed of head while dwelling forward
+speed_head_w_dwelling_w_forward_abs_90th,maximum speed of head while dwelling forward
+speed_head_w_roaming_w_forward_abs_10th,minimum speed of head while roaming forward
+speed_head_w_roaming_w_forward_abs_50th,median speed of head while roaming forward
+speed_head_w_roaming_w_forward_abs_90th,maximum speed of head while roaming forward
+speed_head_w_sprinting_w_forward_abs_10th,minimum speed of head while sprinting forward
+speed_head_w_sprinting_w_forward_abs_50th,median speed of head while sprinting forward
+speed_head_w_sprinting_w_forward_abs_90th,maximum speed of head while sprinting forward
+speed_midbody_w_dwelling_w_forward_abs_10th,minimum speed of midbody while dwelling forward
+speed_midbody_w_dwelling_w_forward_abs_50th,median speed of midbody while dwelling forward
+speed_midbody_w_dwelling_w_forward_abs_90th,maximum speed of midbody while dwelling forward
+speed_midbody_w_roaming_w_forward_abs_10th,minimum speed of midbody while roaming forward
+speed_midbody_w_roaming_w_forward_abs_50th,median speed of midbody while roaming forward
+speed_midbody_w_roaming_w_forward_abs_90th,maximum speed of midbody while roaming forward
+speed_midbody_w_sprinting_w_forward_abs_10th,minimum speed of midbody while sprinting forward
+speed_midbody_w_sprinting_w_forward_abs_50th,median speed of midbody while sprinting forward
+speed_midbody_w_sprinting_w_forward_abs_90th,maximum speed of midbody while sprinting forward
+speed_tail_w_dwelling_w_forward_abs_10th,minimum speed of tail while dwelling forward
+speed_tail_w_dwelling_w_forward_abs_50th,median speed of tail while dwelling forward
+speed_tail_w_dwelling_w_forward_abs_90th,maximum speed of tail while dwelling forward
+speed_tail_w_roaming_w_forward_abs_10th,minimum speed of tail while roaming forward
+speed_tail_w_roaming_w_forward_abs_50th,median speed of tail while roaming forward
+speed_tail_w_roaming_w_forward_abs_90th,maximum speed of tail while roaming forward
+speed_tail_w_sprinting_w_forward_abs_10th,minimum speed of tail while sprinting forward
+speed_tail_w_sprinting_w_forward_abs_50th,median speed of tail while sprinting forward
+speed_tail_w_sprinting_w_forward_abs_90th,maximum speed of tail while sprinting forward
+speed_head_w_dwelling_w_backward_abs_10th,minimum speed of head while dwelling backward
+speed_head_w_dwelling_w_backward_abs_50th,median speed of head while dwelling backward
+speed_head_w_dwelling_w_backward_abs_90th,maximum speed of head while dwelling backward
+speed_head_w_roaming_w_backward_abs_10th,minimum speed of head while roaming backward
+speed_head_w_roaming_w_backward_abs_50th,median speed of head while roaming backward
+speed_head_w_roaming_w_backward_abs_90th,maximum speed of head while roaming backward
+speed_head_w_sprinting_w_backward_abs_10th,minimum speed of head while sprinting backward
+speed_head_w_sprinting_w_backward_abs_50th,median speed of head while sprinting backward
+speed_head_w_sprinting_w_backward_abs_90th,maximum speed of head while sprinting backward
+speed_midbody_w_dwelling_w_backward_abs_10th,minimum speed of midbody while dwelling backward
+speed_midbody_w_dwelling_w_backward_abs_50th,median speed of midbody while dwelling backward
+speed_midbody_w_dwelling_w_backward_abs_90th,maximum speed of midbody while dwelling backward
+speed_midbody_w_roaming_w_backward_abs_10th,minimum speed of midbody while roaming backward
+speed_midbody_w_roaming_w_backward_abs_50th,median speed of midbody while roaming backward
+speed_midbody_w_roaming_w_backward_abs_90th,maximum speed of midbody while roaming backward
+speed_midbody_w_sprinting_w_backward_abs_10th,minimum speed of midbody while sprinting backward
+speed_midbody_w_sprinting_w_backward_abs_50th,median speed of midbody while sprinting backward
+speed_midbody_w_sprinting_w_backward_abs_90th,maximum speed of midbody while sprinting backward
+speed_tail_w_dwelling_w_backward_abs_10th,minimum speed of tail while dwelling backward
+speed_tail_w_dwelling_w_backward_abs_50th,median speed of tail while dwelling backward
+speed_tail_w_dwelling_w_backward_abs_90th,maximum speed of tail while dwelling backward
+speed_tail_w_roaming_w_backward_abs_10th,minimum speed of tail while roaming backward
+speed_tail_w_roaming_w_backward_abs_50th,median speed of tail while roaming backward
+speed_tail_w_roaming_w_backward_abs_90th,maximum speed of tail while roaming backward
+speed_tail_w_sprinting_w_backward_abs_10th,minimum speed of tail while sprinting backward
+speed_tail_w_sprinting_w_backward_abs_50th,median speed of tail while sprinting backward
+speed_tail_w_sprinting_w_backward_abs_90th,maximum speed of tail while sprinting backward
 turn_intra_fraction,turn time % 
