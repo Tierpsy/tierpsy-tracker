@@ -41,3 +41,8 @@ path_straightness_midbody_10s_50th,median path straightness over 10s
 path_straightness_midbody_10s_w_dwelling_50th,median path straightness over 10s while dwelling
 path_straightness_midbody_10s_w_roaming_50th,median path straightness over 10s while roaming
 path_straightness_midbody_10s_w_sprinting_50th,median path straightness over 10s while sprinting
+speed_midbody_abs_50th,median absolute speed of midbody
+speed_midbody_w_forward_abs_50th,median absolute speed of midbody while moving forward
+speed_midbody_w_backward_abs_50th,median absolute speed of midbody while moving backward
+curvature_midbody_abs_50th,median absolute curvature of midbody
+angular_velocity_midbody_abs_50th,median absolute angular speed of midbody

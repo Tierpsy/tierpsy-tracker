@@ -531,6 +531,41 @@ def get_summary_stats(timeseries_data,
     )
     exp_feats.append(feat_stats_abs_speed_subdiv_states)
 
+    # Add state-independent midbody speed magnitudes. These are the overall
+    # counterparts of the Level 1 behavioural-state speed summaries.
+    state_independent_speed_features = ['speed_midbody']
+    feat_stats_abs_speed = get_df_quantiles(
+        timeseries_data,
+        feats2check=state_independent_speed_features,
+        feats2abs=state_independent_speed_features,
+        feats2norm=[],
+        subdivision_dict={},
+        is_remove_subdivided=False,
+        is_abs_ventral=True
+    )
+    if feat_stats_abs_speed is not None:
+        feat_stats_abs_speed = feat_stats_abs_speed.filter(regex='_50th$')
+    exp_feats.append(feat_stats_abs_speed)
+
+    directional_speed_data = _get_cross_subdivided_features(
+        timeseries_data,
+        timeseries_cols=state_independent_speed_features,
+        subdivision_values={'motion_mode': (-1, 1)}
+    )
+    feat_stats_abs_speed_direction = get_df_quantiles(
+        directional_speed_data,
+        feats2check=directional_speed_data.columns.tolist(),
+        feats2abs=state_independent_speed_features,
+        feats2norm=[],
+        subdivision_dict={},
+        is_remove_subdivided=False,
+        is_abs_ventral=True
+    )
+    if feat_stats_abs_speed_direction is not None:
+        feat_stats_abs_speed_direction = \
+            feat_stats_abs_speed_direction.filter(regex='_50th$')
+    exp_feats.append(feat_stats_abs_speed_direction)
+
     # Direction-specific magnitude summaries use intersections rather than
     # independent subdivisions. Paused frames remain represented in the
     # overall state summaries above but are intentionally excluded here.
